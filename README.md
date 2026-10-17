@@ -21,6 +21,7 @@ pnpm install
 Copy-Item .env.example .env     # luego edita las contraseñas
 pnpm up                         # MySQL + Adminer en Docker
 pnpm db:migrate                 # crea las tablas
+pnpm db:seed                    # admin + series + zonas de envío + 20 productos de ejemplo
 pnpm api                        # API en http://localhost:3000
 ```
 
@@ -35,6 +36,7 @@ Si el puerto 3306 está ocupado (por ejemplo, por un MySQL instalado en Windows)
 | `pnpm logs` | Logs en vivo (Ctrl+C para salir) |
 | `pnpm api` | API en modo watch |
 | `pnpm db:studio` | Prisma Studio para ver y editar datos |
+| `pnpm db:seed [users] [config] [catalog]` | Semillas de desarrollo; sin argumentos corre todas. Re-ejecutables |
 
 ### URLs locales
 
@@ -61,6 +63,7 @@ Para empezar de cero en local (borra todos los datos):
 
 ```powershell
 pnpm --filter api exec prisma migrate reset
+pnpm db:seed
 ```
 
 ## Despliegue con Docker (prueba local del stack de producción)
