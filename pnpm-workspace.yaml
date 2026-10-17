@@ -2,3 +2,7 @@ packages:
   - apps/*
   - packages/*
   - tools/*
+allowBuilds:
+  '@prisma/engines': true # descarga el motor de migraciones (binario nativo)
+  '@scarf/scarf': false # telemetría de descargas (llega vía @nestjs/swagger); no la necesitamos
+  prisma: true # prepara el CLI de Prisma

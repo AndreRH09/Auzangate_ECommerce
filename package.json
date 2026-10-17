@@ -11,7 +11,14 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "up": "docker compose up -d",
+    "down": "docker compose down",
+    "ps": "docker compose ps",
+    "logs": "docker compose logs -f --tail 50",
+    "api": "pnpm --filter api dev",
+    "db:migrate": "pnpm --filter api db:migrate",
+    "db:studio": "pnpm --filter api db:studio"
   },
   "devDependencies": {
     "prettier": "3.9.10",
