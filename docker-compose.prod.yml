@@ -1,0 +1,23 @@
+# Despliegue con Docker en puertos predeterminados. Se usa con -f (no se carga solo).
+services:
+  mysql:
+    # sin "ports": MySQL solo es accesible dentro de la red de Docker (la API llega por "mysql:3306")
+    environment:
+      MYSQL_USER: ${MYSQL_USER:?Define MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Define MYSQL_PASSWORD}
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # host "mysql" = nombre del servicio; usuario limitado, no root
+      DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE:-auzangate}
+    depends_on:
+      mysql:
+        condition: service_healthy
