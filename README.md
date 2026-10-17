@@ -8,6 +8,8 @@ Monorepo con pnpm workspaces + Turborepo.
 | `apps/api` | API REST: NestJS 12 + Prisma 7 + MySQL 8.4 |
 | `apps/web` | Tienda y admin: Next.js 16 (pendiente) |
 
+Avance y decisiones: [`docs/PLAN-DE-TRABAJO.md`](docs/PLAN-DE-TRABAJO.md).
+
 ## Requisitos
 
 - Node 24 LTS
