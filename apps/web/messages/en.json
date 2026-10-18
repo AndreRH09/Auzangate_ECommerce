@@ -90,5 +90,16 @@
   "NotFound": {
     "title": "We could not find this page",
     "cta": "Back to home"
+  },
+  "Admin": {
+    "title": "Admin panel",
+    "soon": "The catalog admin arrives in the next step.",
+    "loginTitle": "Admin sign in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "error": "Wrong email or password.",
+    "throttled": "Too many attempts. Wait a minute.",
+    "logout": "Sign out"
   }
 }

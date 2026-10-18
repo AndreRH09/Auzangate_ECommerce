@@ -3,9 +3,6 @@ import { Archivo, Geist_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { TopBar } from "@/components/layout/TopBar";
 import { routing } from "@/i18n/routing";
 import { SITE_URL } from "@/lib/format";
 import "../globals.css";
@@ -40,6 +37,8 @@ export async function generateMetadata({ params }: LayoutProps<"/[locale]">): Pr
 }
 
 // Este es el layout raíz: no hay app/layout.tsx porque <html lang> depende del idioma.
+// Header y footer de la tienda viven en (store)/layout.tsx; el admin tiene los suyos.
+// Cada layout hijo pone id="main" en su contenido (destino del "saltar al contenido").
 export default async function LocaleLayout({ children, params }: LayoutProps<"/[locale]">) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
@@ -52,10 +51,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
           <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-nieve focus:p-3">
             {locale === "es" ? "Saltar al contenido" : "Skip to content"}
           </a>
-          <TopBar />
-          <SiteHeader locale={locale} />
-          <div id="main" className="flex-1">{children}</div>
-          <SiteFooter locale={locale} />
+          {children}
         </NextIntlClientProvider>
       </body>
     </html>

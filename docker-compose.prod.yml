@@ -33,6 +33,7 @@ services:
       <<: *database-url
       NODE_ENV: production
       PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET}
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false} # /docs apagado en producción salvo que se pida
     depends_on:
       migrate:

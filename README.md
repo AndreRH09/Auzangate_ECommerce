@@ -33,7 +33,8 @@ Monorepo con pnpm workspaces + Turborepo.
 - [x] CI: typecheck, lint, e2e, build de API y Worker, imágenes Docker
 - [x] API: catálogo (categorías, series, productos con filtros/búsqueda, sitemap) y newsletter
 - [x] Web: home, listados (categoría, serie, búsqueda), ficha de producto con galería por color, SEO (sitemap, robots, JSON-LD)
-- [ ] Auth del admin, admin de catálogo, imágenes en R2, revalidación, deploy (resto de F1)
+- [x] Auth del admin: login con JWT en cookie httpOnly (BFF), rate limit en login y newsletter
+- [ ] Admin de catálogo, imágenes en R2, revalidación, deploy (resto de F1)
 
 Detalle, decisiones y riesgos al escalar: [docs/PLAN-DE-TRABAJO.md](docs/PLAN-DE-TRABAJO.md).
 
@@ -47,7 +48,7 @@ Detalle, decisiones y riesgos al escalar: [docs/PLAN-DE-TRABAJO.md](docs/PLAN-DE
 
 ```powershell
 pnpm install
-Copy-Item .env.example .env     # luego edita las contraseñas
+Copy-Item .env.example .env     # luego edita las contraseñas y JWT_SECRET
 pnpm up                         # MySQL + Adminer en Docker
 pnpm db:migrate                 # crea las tablas
 pnpm db:seed                    # admin + series + zonas de envío + 22 productos de ejemplo
@@ -82,6 +83,7 @@ Si el puerto 3306 está ocupado (por ejemplo, por un MySQL instalado en Windows)
 | URL | Qué es |
 |---|---|
 | http://localhost:3001 | Tienda (redirige a `/es`; inglés en `/en`) |
+| http://localhost:3001/es/admin | Admin: entra con `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` de `.env` |
 | http://localhost:3000/health | Estado de la API y de la BD |
 | http://localhost:3000/docs | Swagger (documentación de la API) |
 | http://localhost:8080 | Adminer: Sistema `MySQL`, Servidor `mysql`, Usuario `root`, la contraseña de `.env`, BD `auzangate` |
@@ -125,6 +127,8 @@ En producción MySQL no publica puertos: solo la API (3000) es accesible. `-p au
 Si cambias productos del seed, actualiza los conteos de `apps/api/test/catalog.e2e-spec.ts`.
 
 ## Web: idiomas
+
+Rutas: la tienda está en el route group `src/app/[locale]/(store)` (con header y footer) y el admin en `src/app/[locale]/admin` (con su propio layout). `(store)` no aparece en la URL.
 
 Los textos viven en `apps/web/messages/{es,en}.json` y la config en `apps/web/src/i18n/`. Para enlaces internos usa `Link` de `@/i18n/navigation` (agrega el prefijo de idioma), no `next/link`. No hay middleware: OpenNext no lo soporta en runtime Node, por eso `/` → `/es` es un redirect estático en `next.config.ts`.
 

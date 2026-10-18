@@ -1,5 +1,6 @@
-import { Body, Controller, HttpCode, Module, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Module, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { IsEmail, MaxLength } from 'class-validator';
 import { LocaleQuery } from '../catalog/catalog.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -16,7 +17,10 @@ class SubscribeDto extends LocaleQuery {
 class NewsletterController {
   constructor(private readonly prisma: PrismaService) {}
 
+  // ponytail: límite por IP (20/min). Vía BFF todas las requests salen del Worker con IP compartida, así que
+  // en la práctica es un tope global; si molesta, el Worker reenvía la IP del cliente firmada con un secreto.
   @Post()
+  @UseGuards(ThrottlerGuard)
   @HttpCode(204) // misma respuesta si ya estaba suscrito: no revela qué emails existen
   async subscribe(@Body() { email, locale }: SubscribeDto) {
     const normalized = email.toLowerCase();

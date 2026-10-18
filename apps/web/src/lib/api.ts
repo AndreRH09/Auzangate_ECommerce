@@ -54,7 +54,7 @@ export type SitemapFeed = {
   series: { slugs: Alternates }[];
 };
 
-const API_URL = process.env.API_URL ?? "http://localhost:3000";
+export const API_URL = process.env.API_URL ?? "http://localhost:3000";
 
 // ISR: datos cacheados 1 h + invalidación inmediata por tag (POST /api/revalidate desde el admin).
 // Si la API de Render duerme, la tienda sigue sirviendo desde esta caché.

@@ -90,5 +90,16 @@
   "NotFound": {
     "title": "No encontramos esta página",
     "cta": "Volver al inicio"
+  },
+  "Admin": {
+    "title": "Panel de administración",
+    "soon": "El admin de catálogo llega en el próximo paso.",
+    "loginTitle": "Ingresar al admin",
+    "email": "Email",
+    "password": "Contraseña",
+    "submit": "Ingresar",
+    "error": "Email o contraseña incorrectos.",
+    "throttled": "Demasiados intentos. Espera un minuto.",
+    "logout": "Cerrar sesión"
   }
 }
