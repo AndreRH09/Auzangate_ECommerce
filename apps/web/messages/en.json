@@ -1,10 +1,93 @@
 {
   "Metadata": {
-    "description": "Urban outerwear with high-altitude DNA."
+    "title": "AUZANGATE · Urban outerwear with high-altitude DNA",
+    "description": "Technical urban clothing built for the Andean climate: jackets, layers and accessories with real tech specs. Shipping across Peru."
+  },
+  "Header": {
+    "menu": "Menu",
+    "close": "Close",
+    "search": "Search gear…",
+    "searchLabel": "Search",
+    "account": "Account",
+    "favorites": "Favorites",
+    "bag": "Bag",
+    "home": "Home",
+    "series": "Series",
+    "seeAll": "See all",
+    "otherLocale": "Español"
+  },
+  "Footer": {
+    "shop": "Shop",
+    "help": "Help",
+    "shipping": "Shipping and returns",
+    "contact": "Contact",
+    "brand": "Brand",
+    "about": "About AUZANGATE",
+    "rights": "Made in Peru."
   },
   "Home": {
-    "addToBag": "Add to bag",
+    "heroTitle": "Built for altitude",
+    "heroCta": "Shop new arrivals",
+    "categories": "Categories",
+    "newArrivals": "New arrivals",
+    "seeAll": "See all",
+    "editorialTitle": "Wari series",
+    "editorialData": "Tested at 5,200 m · -15 °C · 420 g",
+    "editorialCta": "Shop the series",
+    "newsletterTitle": "News from the mountain, no noise",
+    "newsletterLabel": "Email",
+    "newsletterCta": "Subscribe",
+    "newsletterOk": "Done. We will write when there is something worth it.",
+    "newsletterError": "Check the email and try again."
+  },
+  "Listing": {
+    "count": "{count, plural, one {# item} other {# items}}",
+    "filter": "Filter + sort",
+    "sort": "Sort",
+    "sortNew": "Newest",
+    "sortPriceAsc": "Price: low to high",
+    "sortPriceDesc": "Price: high to low",
+    "size": "Size",
+    "color": "Color",
+    "price": "Price (S/)",
+    "min": "Min",
+    "max": "Max",
+    "any": "All",
+    "apply": "Show results",
+    "clear": "Clear",
+    "empty": "No items match these filters.",
+    "emptyCta": "See new arrivals",
+    "prev": "Previous",
+    "next": "Show more",
+    "series": "{name} series",
+    "searchTitle": "Results for “{q}”",
+    "searchEmptyTitle": "Search",
+    "searchPrompt": "Type a product name or a tech detail, like “merino” or “down”."
+  },
+  "Product": {
     "new": "New",
-    "otherLocale": "Español"
+    "soldOut": "Sold out",
+    "from": "From {price}",
+    "colorsMore": "+{count}",
+    "color": "Color",
+    "size": "Size",
+    "addToBag": "Add to bag",
+    "addToBagShort": "Add · {price}",
+    "chooseSize": "Choose your size",
+    "soldOutSize": "{size}, sold out",
+    "lowStock": "{count} left",
+    "soon": "Online checkout opens very soon.",
+    "details": "Details",
+    "materials": "Materials",
+    "fit": "Size and fit",
+    "fitText": "Regular fit. If you are between sizes, size up to layer underneath.",
+    "shipping": "Shipping and returns",
+    "shippingText": "Shipping across Peru with zone rates (Lima and other regions). The exact cost is calculated at checkout.",
+    "related": "Pairs with",
+    "sku": "SKU"
+  },
+  "NotFound": {
+    "title": "We could not find this page",
+    "cta": "Back to home"
   }
 }

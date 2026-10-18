@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [{ source: "/", destination: "/es", permanent: true }]; // permanent = 308
   },
+  // Preview de PRs: noindex también en la cabecera, para todo (HTML, sitemap, imágenes). Plan §8.2
+  async headers() {
+    return process.env.SITE_ENV === "preview"
+      ? [{ source: "/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex" }] }]
+      : [];
+  },
   turbopack: {
     rules: {
       "*.css": {

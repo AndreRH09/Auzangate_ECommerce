@@ -29,3 +29,5 @@ ClaudeContext/*
 .claude
 
 docs
+# capturas del MCP de Playwright
+.playwright-mcp

@@ -1,10 +1,93 @@
 {
   "Metadata": {
-    "description": "Prenda urbana con ADN de altura."
+    "title": "AUZANGATE · Prenda urbana con ADN de altura",
+    "description": "Ropa técnico-urbana pensada para el clima andino: casacas, capas y accesorios con ficha técnica real. Envíos a todo el Perú."
+  },
+  "Header": {
+    "menu": "Menú",
+    "close": "Cerrar",
+    "search": "Buscar prendas…",
+    "searchLabel": "Buscar",
+    "account": "Cuenta",
+    "favorites": "Favoritos",
+    "bag": "Bolsa",
+    "home": "Inicio",
+    "series": "Series",
+    "seeAll": "Ver todo",
+    "otherLocale": "English"
+  },
+  "Footer": {
+    "shop": "Tienda",
+    "help": "Ayuda",
+    "shipping": "Envíos y cambios",
+    "contact": "Contacto",
+    "brand": "Marca",
+    "about": "Sobre AUZANGATE",
+    "rights": "Hecho en Perú."
   },
   "Home": {
-    "addToBag": "Añadir a la bolsa",
+    "heroTitle": "Hecho para la altura",
+    "heroCta": "Ver lo nuevo",
+    "categories": "Categorías",
+    "newArrivals": "Recién llegado",
+    "seeAll": "Ver todo",
+    "editorialTitle": "Serie Wari",
+    "editorialData": "Probado a 5 200 m · -15 °C · 420 g",
+    "editorialCta": "Ver la serie",
+    "newsletterTitle": "Novedades de la montaña, sin ruido",
+    "newsletterLabel": "Correo electrónico",
+    "newsletterCta": "Suscribirme",
+    "newsletterOk": "Listo. Te escribiremos cuando haya algo que valga la pena.",
+    "newsletterError": "Revisa el correo e inténtalo otra vez."
+  },
+  "Listing": {
+    "count": "{count, plural, one {# prenda} other {# prendas}}",
+    "filter": "Filtrar + ordenar",
+    "sort": "Ordenar",
+    "sortNew": "Lo nuevo",
+    "sortPriceAsc": "Precio: menor a mayor",
+    "sortPriceDesc": "Precio: mayor a menor",
+    "size": "Talla",
+    "color": "Color",
+    "price": "Precio (S/)",
+    "min": "Mín.",
+    "max": "Máx.",
+    "any": "Todas",
+    "apply": "Ver resultados",
+    "clear": "Limpiar",
+    "empty": "No hay prendas con estos filtros.",
+    "emptyCta": "Mira lo recién llegado",
+    "prev": "Anterior",
+    "next": "Ver más",
+    "series": "Serie {name}",
+    "searchTitle": "Resultados para “{q}”",
+    "searchEmptyTitle": "Buscar",
+    "searchPrompt": "Escribe el nombre de una prenda o un dato técnico, como “merino” o “pluma”."
+  },
+  "Product": {
     "new": "Nuevo",
-    "otherLocale": "English"
+    "soldOut": "Agotado",
+    "from": "Desde {price}",
+    "colorsMore": "+{count}",
+    "color": "Color",
+    "size": "Talla",
+    "addToBag": "Añadir a la bolsa",
+    "addToBagShort": "Añadir · {price}",
+    "chooseSize": "Elige tu talla",
+    "soldOutSize": "{size}, agotada",
+    "lowStock": "Quedan {count}",
+    "soon": "La compra en línea se habilita muy pronto.",
+    "details": "Detalles",
+    "materials": "Materiales",
+    "fit": "Talla y calce",
+    "fitText": "Calce regular. Si estás entre dos tallas, elige la mayor para usar capas debajo.",
+    "shipping": "Envío y cambios",
+    "shippingText": "Envío a todo el Perú con tarifa por zona (Lima Metropolitana y provincias). El costo exacto se calcula en el checkout.",
+    "related": "Combina con",
+    "sku": "SKU"
+  },
+  "NotFound": {
+    "title": "No encontramos esta página",
+    "cta": "Volver al inicio"
   }
 }

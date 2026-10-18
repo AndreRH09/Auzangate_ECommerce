@@ -51,6 +51,14 @@ jobs:
       - name: Build de la API
         run: pnpm --filter api build
 
+      # El build de Next pre-genera /es, /en y el sitemap con datos del catálogo: necesita la API viva
+      - name: Levantar la API para el build
+        working-directory: apps/api
+        run: |
+          node dist/main.js > /tmp/api.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://localhost:3000/health && exit 0; sleep 1; done
+          cat /tmp/api.log; exit 1
+
       - name: Build del worker (OpenNext)
         run: pnpm --filter web exec opennextjs-cloudflare build
       - name: Tamaño del worker (< 2.8 MiB gzip; el límite del plan gratuito es 3 MiB)
