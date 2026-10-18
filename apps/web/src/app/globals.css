@@ -177,15 +177,3 @@
     }
   }
 }
-
-/* Easter egg: el parche del footer recorre las 5 series al pasar el mouse */
-@keyframes series-cycle {
-  0% { --mark: url(/brand/parche-serie-caral.svg); }
-  20% { --mark: url(/brand/parche-serie-wari.svg); }
-  40% { --mark: url(/brand/parche-serie-sican.svg); }
-  60% { --mark: url(/brand/parche-serie-vicus.svg); }
-  80%, 100% { --mark: url(/brand/parche-serie-nasca.svg); }
-}
-.series-cycle:hover {
-  animation: series-cycle 2s steps(1) infinite;
-}

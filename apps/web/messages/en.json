@@ -1,6 +1,6 @@
 {
   "Metadata": {
-    "title": "AUZANGATE · Urban outerwear with high-altitude DNA",
+    "title": "AUZANGATE · No easy ascent",
     "description": "Technical urban clothing built for the Andean climate: jackets, layers and accessories with real tech specs. Shipping across Peru."
   },
   "Header": {
@@ -26,7 +26,7 @@
     "rights": "Made in Peru."
   },
   "Home": {
-    "heroTitle": "Built for altitude",
+    "heroTitle": "No easy ascent",
     "categories": "Categories",
     "newArrivals": "New arrivals",
     "seeAll": "See all",
@@ -36,8 +36,8 @@
     "newsletterOk": "Done. We will write when there is something worth it.",
     "newsletterError": "Check the email and try again.",
     "heroData": "6,384 m · 13°47′S 71°13′W · Cusco",
-    "seriesTitle": "Five series, one mountain",
-    "seriesIntro": "Each line is named after a pre-Inca culture and carries its own patch, woven on the sleeve."
+    "seriesTitle": "Five series",
+    "seriesIntro": "Special editions: each series is named after a pre-Inca culture and carries its own patch, woven on the sleeve."
   },
   "Listing": {
     "count": "{count, plural, one {# item} other {# items}}",

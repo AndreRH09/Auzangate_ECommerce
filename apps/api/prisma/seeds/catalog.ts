@@ -6,12 +6,13 @@ import { prisma } from './client.js';
 type T = Record<Locale, string>;
 const LOCALES = ['es', 'en'] as const;
 
+// La primera frase de la descripción es el nombre de la línea (la tienda la muestra como etiqueta).
 const SERIES: { code: string; name: T; description: T }[] = [
-  { code: 'CARAL', name: { es: 'Caral', en: 'Caral' }, description: { es: 'Línea OG. La serie clásica y pionera.', en: 'OG line. The classic, original series.' } },
+  { code: 'CARAL', name: { es: 'Caral', en: 'Caral' }, description: { es: 'Classic. La serie clásica y pionera.', en: 'Classic. The classic, original series.' } },
   { code: 'WARI', name: { es: 'Wari', en: 'Wari' }, description: { es: 'Expedición. Montañismo y outdoor exigente.', en: 'Expedition. Mountaineering and demanding outdoors.' } },
-  { code: 'SICAN', name: { es: 'Sicán', en: 'Sicán' }, description: { es: 'Premium. Acabados, buen vestir y tendencias.', en: 'Premium. Finishes, tailoring and trends.' } },
-  { code: 'VICUS', name: { es: 'Vicús', en: 'Vicús' }, description: { es: 'Equilibrio entre resistencia, acabados limpios y comodidad.', en: 'Balance of durability, clean finishes and comfort.' } },
-  { code: 'NASCA', name: { es: 'Nasca', en: 'Nasca' }, description: { es: 'Ligera. Ropa liviana para climas cálidos.', en: 'Light. Lightweight gear for warm climates.' } },
+  { code: 'SICAN', name: { es: 'Sicán', en: 'Sicán' }, description: { es: 'Selecto. Acabados, buen vestir y tendencias.', en: 'Selecto. Finishes, tailoring and trends.' } },
+  { code: 'VICUS', name: { es: 'Vicús', en: 'Vicús' }, description: { es: 'Balance. Resistencia, acabados limpios y comodidad.', en: 'Balance. Durability, clean finishes and comfort.' } },
+  { code: 'NASCA', name: { es: 'Nasca', en: 'Nasca' }, description: { es: 'Light. Ropa liviana para climas cálidos.', en: 'Light. Lightweight gear for warm climates.' } },
 ];
 
 // 3 padres; Hombre y Mujer con 3 hijas cada una.
@@ -73,23 +74,19 @@ const slugify =(s: string) =>
 // Stock determinista (sin Math.random) para que cada reset dé lo mismo; algunos en 0 para ver "Agotado".
 const stockFor = (i: number) => [0, 2, 5, 8, 12, 3][i % 6]!;
 
+// Upsert: re-ejecutar el seed actualiza nombres y descripciones de las series aunque el catálogo ya exista.
 async function seedSeries() {
   const ids = new Map<string, string>();
   for (const [sort, s] of SERIES.entries()) {
-    const row = await prisma.series.create({
-      data: {
-        code: s.code,
-        sort,
-        translations: {
-          create: LOCALES.map((locale) => ({
-            locale,
-            name: s.name[locale],
-            slug: slugify(s.name[locale]),
-            description: s.description[locale],
-          })),
-        },
-      },
-    });
+    const row = await prisma.series.upsert({ where: { code: s.code }, create: { code: s.code, sort }, update: { sort } });
+    for (const locale of LOCALES) {
+      const data = { name: s.name[locale], slug: slugify(s.name[locale]), description: s.description[locale] };
+      await prisma.seriesTranslation.upsert({
+        where: { seriesId_locale: { seriesId: row.id, locale } },
+        create: { seriesId: row.id, locale, ...data },
+        update: data,
+      });
+    }
     ids.set(s.code, row.id);
   }
   return ids;
@@ -178,12 +175,12 @@ async function createProduct(i: number, p: ProductInput) {
 }
 
 export async function seedCatalog() {
+  const series = await seedSeries();
   if ((await prisma.product.count()) > 0) {
-    console.log('· catálogo ya existe, se omite (para re-sembrar: pnpm --filter api exec prisma migrate reset y luego pnpm db:seed)');
+    console.log(`✓ ${SERIES.length} series actualizadas · productos ya existen, se omiten (para re-sembrar: prisma migrate reset y luego pnpm db:seed)`);
     return;
   }
 
-  const series = await seedSeries();
   const categories = await seedCategories();
 
   const products: ProductInput[] = [];

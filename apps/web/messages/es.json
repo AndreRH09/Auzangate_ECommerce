@@ -1,6 +1,6 @@
 {
   "Metadata": {
-    "title": "AUZANGATE · Prenda urbana con ADN de altura",
+    "title": "AUZANGATE · No easy ascent",
     "description": "Ropa técnico-urbana pensada para el clima andino: casacas, capas y accesorios con ficha técnica real. Envíos a todo el Perú."
   },
   "Header": {
@@ -26,7 +26,7 @@
     "rights": "Hecho en Perú."
   },
   "Home": {
-    "heroTitle": "Hecho para la altura",
+    "heroTitle": "No easy ascent",
     "categories": "Categorías",
     "newArrivals": "Recién llegado",
     "seeAll": "Ver todo",
@@ -37,7 +37,7 @@
     "newsletterError": "Revisa el correo e inténtalo otra vez.",
     "heroData": "6 384 m · 13°47′S 71°13′O · Cusco",
     "seriesTitle": "Cinco series, un apu",
-    "seriesIntro": "Cada línea lleva el nombre de una cultura preinca y su propio parche, tejido en la manga."
+    "seriesIntro": "Ediciones especiales: cada serie lleva el nombre de una cultura preinca y su propio parche, tejido en la manga."
   },
   "Listing": {
     "count": "{count, plural, one {# prenda} other {# prendas}}",
