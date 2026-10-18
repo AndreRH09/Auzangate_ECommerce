@@ -85,4 +85,6 @@ jobs:
           target: migrate
           cache-from: type=gha
       - name: Tamaño de la imagen
-        run: docker image ls auzangate-api:ci --format 'API runtime: {{.Size}}' >> "$GITHUB_STEP_SUMMARY"
+        # bloque "|": el ": " dentro del comando rompería el YAML en una sola línea
+        run: |
+          docker image ls auzangate-api:ci --format 'API runtime: {{.Size}}' >> "$GITHUB_STEP_SUMMARY"
