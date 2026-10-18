@@ -71,11 +71,11 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
             {tiles.map((tile) => (
               <li key={tile.href}>
                 <Link href={tile.href} className="group block">
-                  <div className="aspect-[4/5] overflow-hidden rounded-sm bg-roca-clara">
+                  <div className="aspect-[4/5] overflow-hidden rounded-sm bg-photo">
                     {tile.img && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={tile.img.url} alt="" loading="lazy" width={tile.img.width} height={tile.img.height}
-                        className={`size-full ${tile.img.width > tile.img.height ? "object-contain p-4" : "object-cover"}`} />
+                        className={`size-full object-contain ${tile.img.width / tile.img.height > 0.85 ? "p-4" : ""}`} />
                     )}
                   </div>
                   <p className="mt-3 text-sm font-semibold group-hover:underline">{tile.name}</p>
@@ -104,7 +104,7 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
         {wari && (
           <section className="mt-24 grid items-end gap-8 md:grid-cols-2" aria-labelledby="h-ed">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={EDITORIAL} alt="" loading="lazy" width={1600} height={2000} className="aspect-[4/5] w-full rounded-sm bg-roca-clara object-cover" />
+            <img src={EDITORIAL} alt="" loading="lazy" width={1600} height={2000} className="aspect-[4/5] w-full rounded-sm bg-photo object-cover" />
             <div className="pb-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/brand/parche-serie-wari.svg" alt="" width={96} height={96} className="size-24" />

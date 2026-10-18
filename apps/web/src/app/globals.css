@@ -43,6 +43,12 @@
   text-transform: uppercase;
 }
 
+/* Fondo de todo marco de foto de producto: gris desde arriba que se aclara hacia abajo.
+   Unifica PNG sin fondo (el objeto "flota" igual en card, PDP y home). Única excepción a "sin gradientes". */
+@utility bg-photo {
+  background: linear-gradient(180deg, var(--color-linea) 0%, var(--color-roca-clara) 45%, var(--color-glaciar) 100%);
+}
+
 /* Estados: "NUEVO", "AGOTADO" */
 @utility label {
   font-size: 12px;

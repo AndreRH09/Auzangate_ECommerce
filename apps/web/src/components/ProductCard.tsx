@@ -3,8 +3,9 @@ import { Link } from "@/i18n/navigation";
 import type { Card, Image } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 
-// Las fotos de estudio horizontales (renders) se muestran enteras; las verticales llenan el 4:5.
-const fit = (img: Image) => (img.width > img.height ? "object-contain p-4" : "object-cover");
+// object-contain siempre: una foto 4:5 llena el marco igual que con cover, y un PNG de otra proporción
+// queda entero y centrado sobre el gradiente (nunca se recorta el producto).
+const fit = (img: Image) => (img.width / img.height > 0.85 ? "object-contain p-4" : "object-contain");
 
 /* eslint-disable @next/next/no-img-element -- ponytail: <img> nativo con lazy loading; next/image necesita
    el binding de Cloudflare Images en el worker. Activarlo cuando las fotos reales vivan en R2. */
@@ -16,7 +17,7 @@ export async function ProductCard({ product: p, priority = false }: { product: C
   return (
     <article className="group">
       <Link href={`/p/${p.slug}`} className="block">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-roca-clara">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-photo">
           {first && (
             <img
               src={first.url}

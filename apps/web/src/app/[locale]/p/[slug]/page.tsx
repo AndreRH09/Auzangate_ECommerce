@@ -82,7 +82,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/p/[sl
                 height={img.height}
                 loading={i === 0 ? "eager" : "lazy"}
                 fetchPriority={i === 0 ? "high" : undefined}
-                className={`aspect-[4/5] w-full bg-roca-clara ${img.width > img.height ? "object-contain p-8" : "object-cover"}`}
+                className={`aspect-[4/5] w-full bg-photo object-contain ${img.width / img.height > 0.85 ? "p-8" : ""}`}
               />
               <span className="data absolute bottom-3 left-3 rounded-sm bg-granito/80 px-2 py-1 text-nieve md:hidden">
                 {i + 1} / {p.images.length}
