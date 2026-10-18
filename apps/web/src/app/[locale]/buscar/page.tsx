@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Listing, type ListingParams } from "@/components/Listing";
+import { ProductListing, type ListingParams } from "@/components/catalog/ProductListing";
 import type { Locale } from "@/i18n/routing";
 
 // Resultados de búsqueda: noindex, follow (plan §3.4). Sin q lista todo el catálogo.
@@ -24,7 +24,7 @@ export default async function SearchPage({ params, searchParams }: PageProps<"/[
         <label htmlFor="q" className="text-xs text-pizarra">{t("searchPrompt")}</label>
         <input id="q" name="q" type="search" defaultValue={q} className="mt-1 h-cta w-full max-w-lg rounded-sm border border-linea bg-nieve px-4 text-base" />
       </form>
-      <Listing
+      <ProductListing
         locale={locale}
         path="/buscar"
         base={{ q: q || undefined }}

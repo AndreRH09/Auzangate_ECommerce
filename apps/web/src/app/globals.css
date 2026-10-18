@@ -43,6 +43,14 @@
   text-transform: uppercase;
 }
 
+/* Títulos de sección (--t-h2): clamp(28px, 3vw, 40px) / 700, ancho 110 */
+@utility section-title {
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 700;
+  font-stretch: 110%;
+  line-height: 1;
+}
+
 /* Fondo de todo marco de foto de producto: gris desde arriba que se aclara hacia abajo.
    Unifica PNG sin fondo (el objeto "flota" igual en card, PDP y home). Única excepción a "sin gradientes". */
 @utility bg-photo {

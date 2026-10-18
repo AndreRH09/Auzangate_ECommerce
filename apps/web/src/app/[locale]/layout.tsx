@@ -3,8 +3,8 @@ import { Archivo, Geist_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { routing } from "@/i18n/routing";
 import { SITE_URL } from "@/lib/format";
 import "../globals.css";
@@ -51,9 +51,9 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
           <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-nieve focus:p-3">
             {locale === "es" ? "Saltar al contenido" : "Skip to content"}
           </a>
-          <Header locale={locale} />
+          <SiteHeader locale={locale} />
           <div id="main" className="flex-1">{children}</div>
-          <Footer locale={locale} />
+          <SiteFooter locale={locale} />
         </NextIntlClientProvider>
       </body>
     </html>

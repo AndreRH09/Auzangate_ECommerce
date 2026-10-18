@@ -8,7 +8,9 @@ import { formatPrice } from "@/lib/format";
 const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "U"];
 const bySize = (a: string, b: string) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b);
 
-export function BuyBox({
+// Panel de compra (design system §5): nombre, precio, color, talla (agotadas tachadas), CTA
+// y en mobile la barra fija inferior con el precio dentro del botón.
+export function ProductBuyBox({
   name,
   subtitle,
   variants,

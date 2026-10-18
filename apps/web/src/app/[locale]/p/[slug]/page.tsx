@@ -1,9 +1,13 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { BuyBox } from "@/components/BuyBox";
-import { ProductGrid } from "@/components/ProductCard";
+import { ProductBuyBox } from "@/components/product/ProductBuyBox";
+import { ProductGallery } from "@/components/product/ProductGallery";
+import { ProductSpecsAccordion } from "@/components/product/ProductSpecsAccordion";
+import { RelatedProducts } from "@/components/product/RelatedProducts";
+import { Breadcrumb } from "@/components/seo/Breadcrumb";
+import { JsonLd } from "@/components/seo/JsonLd";
 import type { Locale } from "@/i18n/routing";
 import { getProduct } from "@/lib/api";
-import { absolute, Breadcrumb, JsonLd, pageMeta } from "@/lib/seo";
+import { absolute, pageMeta } from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -26,16 +30,13 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/p/[slug]
   });
 }
 
-/* eslint-disable @next/next/no-img-element -- ver ProductCard */
+// Ficha de producto (design system §5): breadcrumb · galería + buy-box flotante · ficha técnica · combina con
 export default async function ProductPage({ params }: PageProps<"/[locale]/p/[slug]">) {
   const { locale: raw, slug } = await params;
   const locale = raw as Locale;
   setRequestLocale(locale);
-  const [p, t, th] = await Promise.all([getProduct(slug, locale), getTranslations("Product"), getTranslations("Header")]);
-
+  const [p, th] = await Promise.all([getProduct(slug, locale), getTranslations("Header")]);
   const prices = p.variants.map((v) => v.priceCents);
-  const inStock = p.variants.some((v) => v.stock > 0);
-  const specs = Object.entries(p.techSpecs);
 
   return (
     <main className="pt-4">
@@ -52,7 +53,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/p/[sl
             "@type": "Offer",
             priceCurrency: "PEN",
             price: (Math.min(...prices) / 100).toFixed(2),
-            availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+            availability: p.variants.some((v) => v.stock > 0) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
             url: absolute(`/${locale}/p/${p.slug}`),
           },
         }}
@@ -70,29 +71,11 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/p/[sl
         />
       </div>
 
-      {/* Galería scroll-snap + buy-box flotante encima de la 2ª foto (design system §5) */}
+      {/* buy-box flotante encima de la 2ª foto en desktop; debajo de la galería en mobile */}
       <div className="relative mt-4">
-        <ul className="flex snap-x snap-mandatory gap-2 overflow-x-auto" aria-label={p.name}>
-          {p.images.map((img, i) => (
-            <li key={img.url} className="relative shrink-0 basis-full snap-start md:basis-[42vw]">
-              <img
-                src={img.url}
-                alt={img.alt}
-                width={img.width}
-                height={img.height}
-                loading={i === 0 ? "eager" : "lazy"}
-                fetchPriority={i === 0 ? "high" : undefined}
-                className={`aspect-[4/5] w-full bg-photo object-contain ${img.width / img.height > 0.85 ? "p-8" : ""}`}
-              />
-              <span className="data absolute bottom-3 left-3 rounded-sm bg-granito/80 px-2 py-1 text-nieve md:hidden">
-                {i + 1} / {p.images.length}
-              </span>
-            </li>
-          ))}
-        </ul>
-
+        <ProductGallery images={p.images} label={p.name} />
         <div className="md:absolute md:top-6 md:right-8 md:max-h-[calc(100svh-112px)] md:w-[min(564px,39vw)] md:overflow-y-auto md:rounded-panel md:bg-glaciar/90 md:backdrop-blur-md">
-          <BuyBox
+          <ProductBuyBox
             name={p.name}
             subtitle={p.subtitle}
             variants={p.variants}
@@ -102,42 +85,8 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/p/[sl
       </div>
 
       <div className="mx-auto mt-16 max-w-[1600px] px-4 md:px-8">
-        {/* Ficha técnica: acordeón exclusivo nativo (<details name>) en vez de tabs con JS */}
-        <div className="max-w-3xl divide-y divide-linea border-y border-linea">
-          {[
-            { key: "details", body: <p className="max-w-prose">{p.description}</p> },
-            {
-              key: "materials",
-              body: (
-                <dl className="data grid grid-cols-[auto_1fr] gap-x-8 gap-y-2">
-                  {specs.map(([k, v]) => (
-                    <div key={k} className="contents">
-                      <dt className="text-pizarra capitalize">{k}</dt>
-                      <dd>{v}</dd>
-                    </div>
-                  ))}
-                </dl>
-              ),
-            },
-            { key: "fit", body: <p className="max-w-prose">{t("fitText")}</p> },
-            { key: "shipping", body: <p className="max-w-prose">{t("shippingText")}</p> },
-          ].map((s, i) => (
-            <details key={s.key} name="pdp-info" open={i === 0} className="group">
-              <summary className="flex h-14 cursor-pointer list-none items-center justify-between font-semibold">
-                {t(s.key as "details")}
-                <span aria-hidden className="data transition-transform group-open:rotate-45 motion-reduce:transition-none">+</span>
-              </summary>
-              <div className="pb-6">{s.body}</div>
-            </details>
-          ))}
-        </div>
-
-        {p.related.length > 0 && (
-          <section className="mt-24" aria-labelledby="h-rel">
-            <h2 id="h-rel" className="mb-8 text-[clamp(28px,3vw,40px)] leading-none font-bold [font-stretch:110%]">{t("related")}</h2>
-            <ProductGrid products={p.related} />
-          </section>
-        )}
+        <ProductSpecsAccordion description={p.description} techSpecs={p.techSpecs} />
+        <RelatedProducts products={p.related} />
       </div>
     </main>
   );

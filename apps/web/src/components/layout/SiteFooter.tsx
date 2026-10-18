@@ -2,9 +2,9 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { getCategories, getSeries } from "@/lib/api";
-import { LocaleSwitch } from "./LocaleSwitch";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
-export async function Footer({ locale }: { locale: Locale }) {
+export async function SiteFooter({ locale }: { locale: Locale }) {
   const [t, th, categories, series] = await Promise.all([
     getTranslations("Footer"),
     getTranslations("Header"),
@@ -35,7 +35,7 @@ export async function Footer({ locale }: { locale: Locale }) {
           </div>
         ))}
         <div className="col-span-2 flex flex-col items-start justify-between gap-4 md:items-end">
-          <LocaleSwitch label={th("otherLocale")} />
+          <LanguageSwitcher label={th("otherLocale")} />
           <p className="data text-pizarra">© {new Date().getFullYear()} AUZANGATE · {t("rights")}</p>
         </div>
       </div>

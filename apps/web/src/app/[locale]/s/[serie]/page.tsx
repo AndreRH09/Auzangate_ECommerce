@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Listing, type ListingParams } from "@/components/Listing";
+import { ProductListing, type ListingParams } from "@/components/catalog/ProductListing";
 import type { Locale } from "@/i18n/routing";
 import { getSeries } from "@/lib/api";
-import { Breadcrumb, pageMeta } from "@/lib/seo";
+import { Breadcrumb } from "@/components/seo/Breadcrumb";
+import { pageMeta } from "@/lib/seo";
 
 async function find(locale: Locale, slug: string) {
   return (await getSeries(locale)).find((s) => s.slug === slug) ?? notFound();
@@ -29,7 +30,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps<"/[
   const [s, t, th] = await Promise.all([find(locale, serie), getTranslations("Listing"), getTranslations("Header")]);
 
   return (
-    <Listing
+    <ProductListing
       locale={locale}
       path={`/s/${s.slug}`}
       base={{ series: s.slug }}

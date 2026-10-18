@@ -4,8 +4,8 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { subscribe } from "@/app/actions";
 
-// Input con botón pegado, en una línea, sin pop-up (design system §7.5)
-export function Newsletter() {
+// Newsletter: input con botón pegado, en una línea, sin pop-up (design system §7.5)
+export function NewsletterForm() {
   const t = useTranslations("Home");
   const [state, action, pending] = useActionState(subscribe, null);
 

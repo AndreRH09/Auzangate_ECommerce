@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Listing, type ListingParams } from "@/components/Listing";
+import { ProductListing, type ListingParams } from "@/components/catalog/ProductListing";
 import type { Locale } from "@/i18n/routing";
 import { getCategories } from "@/lib/api";
-import { Breadcrumb, pageMeta } from "@/lib/seo";
+import { Breadcrumb } from "@/components/seo/Breadcrumb";
+import { pageMeta } from "@/lib/seo";
 
 // Busca la categoría (padre o hija) y su padre para el breadcrumb
 async function find(locale: Locale, slug: string) {
@@ -35,7 +36,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps<"
   const [{ category: c, parent }, th] = await Promise.all([find(locale, category), getTranslations("Header")]);
 
   return (
-    <Listing
+    <ProductListing
       locale={locale}
       path={`/c/${c.slug}`}
       base={{ category: c.slug }}
