@@ -24,7 +24,7 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
   return (
     <footer className="mt-32 overflow-hidden bg-granito text-nieve">
       <div className="mx-auto max-w-[1600px] px-4 md:px-8">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-12 border-b border-nieve/15 py-16 md:grid-cols-[1.4fr_1fr_1fr]">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-12 border-b border-nieve/15 py-16 md:grid-cols-[1.4fr_1fr_1fr_auto]">
           <div className="col-span-2 md:col-span-1">
             <NewsletterForm />
           </div>
@@ -42,16 +42,18 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
               </ul>
             </nav>
           ))}
+          {/* el isotipo solo, arriba a la derecha: la pieza más representativa de la marca */}
+          <BrandMark asset="isotipo" label="AUZANGATE" className="h-16 self-start max-md:hidden md:h-20" />
         </div>
 
-        <div className="data flex flex-wrap items-center justify-between gap-4 py-6 opacity-80">
-          <p>© {new Date().getFullYear()} AUZANGATE · {t("rights")}</p>
-          <LanguageSwitcher />
+        {/* cierre: lockup horizontal a escala de firma + créditos e idioma */}
+        <div className="flex flex-wrap items-end justify-between gap-6 py-8">
+          <BrandMark asset="lockup-horizontal" label="AUZANGATE" className="block w-56 md:w-72" />
+          <div className="data flex flex-wrap items-center gap-6 opacity-80">
+            <p>© {new Date().getFullYear()} AUZANGATE · {t("rights")}</p>
+            <LanguageSwitcher />
+          </div>
         </div>
-
-        {/* Firma de cierre: el isotipo (la pieza más representativa de la marca) con el wordmark,
-            completos y a todo el ancho. Los parches quedan para las series, que son ediciones especiales. */}
-        <BrandMark asset="lockup-horizontal" label="AUZANGATE" className="mb-8 block w-full md:mb-12" />
       </div>
     </footer>
   );
