@@ -1,0 +1,19 @@
+# Preview local del worker de Cloudflare en Linux.
+# OpenNext no soporta Windows (falla copiando los symlinks de pnpm: "Access is denied").
+#   docker build -f apps/web/Dockerfile.preview -t auzangate-web-preview .
+#   docker run --rm -p 8787:8787 auzangate-web-preview      -> http://localhost:8787
+FROM node:24
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+WORKDIR /app
+COPY package.json ./
+RUN corepack enable && corepack install
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/web/package.json apps/web/
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --filter web
+COPY apps/web apps/web
+WORKDIR /app/apps/web
+RUN pnpm exec opennextjs-cloudflare build
+EXPOSE 8787
+# --ip 0.0.0.0: escuchar fuera del contenedor (por defecto wrangler solo escucha en localhost)
+CMD ["pnpm", "exec", "wrangler", "dev", "--ip", "0.0.0.0", "--port", "8787"]

@@ -27,3 +27,5 @@ apps/api/src/generated
 # contexto local
 ClaudeContext/*
 .claude
+
+docs

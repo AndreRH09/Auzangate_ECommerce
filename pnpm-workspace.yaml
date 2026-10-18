@@ -7,5 +7,8 @@ allowBuilds:
   '@scarf/scarf': false # telemetría de descargas (llega vía @nestjs/swagger); no la necesitamos
   esbuild: true # verifica el binario nativo de esbuild (lo usa tsx para correr TypeScript)
   prisma: true # prepara el CLI de Prisma
+  '@parcel/watcher': false # (vía next-intl) su script solo compila desde fuente si falta el binario precompilado
+  '@swc/core': false # (vía next-intl) su postinstall solo valida el binario; el opcional correcto ya se instala
   sharp: false # optimizador de imágenes de Node; en Cloudflare se usa Cloudflare Images
+  workerd: true # runtime local de Cloudflare Workers (lo usa wrangler/preview)
   unrs-resolver: false # su postinstall solo repara binarios faltantes; el opcional correcto ya se instala

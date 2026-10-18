@@ -1,8 +1,13 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
 // ponytail: sin cacheComponents/partialPrefetching (defaults del CLI). El plan usa ISR con
 // revalidate + revalidateTag; se evalúa el modelo nuevo cuando OpenNext lo soporte estable.
 const nextConfig: NextConfig = {
+  // Sin middleware (OpenNext no soporta el runtime Node en middleware): "/" redirige con una regla estática
+  async redirects() {
+    return [{ source: "/", destination: "/es", permanent: true }]; // permanent = 308
+  },
   turbopack: {
     rules: {
       "*.css": {
@@ -13,4 +18,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// El plugin conecta src/i18n/request.ts con next-intl
+export default createNextIntlPlugin()(nextConfig);
