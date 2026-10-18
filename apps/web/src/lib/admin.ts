@@ -1,10 +1,8 @@
 import { cookies } from "next/headers"; // solo servidor: importarlo desde un client component falla en el build
-import { API_URL } from "./api";
+import { type Admin, API_URL } from "./api";
 
 // Sesión del admin: el JWT vive en una cookie httpOnly; el navegador nunca lo ve ni llama a la API (BFF).
 export const ADMIN_COOKIE = "admin_token";
-
-export type Admin = { id: string; email: string; name: string };
 
 export const adminToken = async () => (await cookies()).get(ADMIN_COOKIE)?.value;
 

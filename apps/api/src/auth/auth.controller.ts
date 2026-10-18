@@ -6,6 +6,7 @@ import { hash, verify } from '@node-rs/argon2';
 import { IsEmail, IsString, MaxLength } from 'class-validator';
 import type { Request } from 'express';
 import type { Env } from '../config/env.js';
+import type { Admin, LoginResponse } from '../contract.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AdminGuard, type AdminRequest } from './admin.guard.js';
 import { signToken } from './token.js';
@@ -45,7 +46,7 @@ class AuthController {
   @HttpCode(200)
   @UseGuards(LoginThrottler)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  async login(@Body() { email, password }: LoginDto) {
+  async login(@Body() { email, password }: LoginDto): Promise<LoginResponse> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     const ok = await verify(user?.passwordHash ?? (await DUMMY_HASH), password);
     if (!user || !ok || user.role !== 'ADMIN' || user.status !== 'ACTIVE') throw new UnauthorizedException();
@@ -55,7 +56,7 @@ class AuthController {
   @Get('me')
   @ApiBearerAuth()
   @UseGuards(AdminGuard)
-  me(@Req() req: AdminRequest) {
+  me(@Req() req: AdminRequest): Admin {
     return req.admin;
   }
 }

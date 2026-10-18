@@ -1,58 +1,9 @@
 import { notFound } from "next/navigation";
+import type { Category, Product, ProductList, Series, SitemapFeed } from "@api/contract";
 import type { Locale } from "@/i18n/routing";
 
-// ponytail: tipos escritos a mano según las respuestas de apps/api/src/catalog. Generarlos desde
-// openapi.json (packages/api-types) cuando la API tenga DTOs de respuesta y más de un consumidor.
-export type Alternates = Record<Locale, string>;
-export type Image = { url: string; alt: string; width: number; height: number; colorHex: string | null }; // null = todos los colores
-export type Color = { hex: string; name: string };
-
-export type Card = {
-  id: string;
-  slug: string;
-  name: string;
-  subtitle: string;
-  priceCents: number;
-  colors: Color[];
-  isNew: boolean;
-  soldOut: boolean;
-  images: Image[];
-  alternates: Alternates;
-};
-
-export type Category = { name: string; slug: string; alternates: Alternates; children: Omit<Category, "children">[] };
-export type Series = { code: string; name: string; slug: string; description: string; alternates: Alternates };
-type Named = { name: string; slug: string; alternates: Alternates };
-
-export type ProductList = {
-  total: number;
-  items: Card[];
-  nextCursor: string | null;
-  facets: { sizes: string[]; colors: Color[]; price: { min: number; max: number } };
-};
-
-export type Product = {
-  id: string;
-  code: string;
-  slug: string;
-  name: string;
-  subtitle: string;
-  description: string;
-  techSpecs: Record<string, string>;
-  updatedAt: string;
-  alternates: Alternates;
-  category: Named & { parent: Named | null };
-  series: (Named & { code: string }) | null;
-  variants: { id: string; sku: string; colorHex: string; colorName: string; size: string; priceCents: number; stock: number }[];
-  images: Image[];
-  related: Card[];
-};
-
-export type SitemapFeed = {
-  products: { updatedAt: string; slugs: Alternates; images: string[] }[];
-  categories: { slugs: Alternates }[];
-  series: { slugs: Alternates }[];
-};
+// Tipos de las respuestas: vienen del contrato de la API (apps/api/src/contract.ts), no se escriben aquí.
+export type * from "@api/contract";
 
 export const API_URL = process.env.API_URL ?? "http://localhost:3000";
 

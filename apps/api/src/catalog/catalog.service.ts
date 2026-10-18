@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import type { Env } from '../config/env.js';
 import { Prisma, ProductStatus, type Locale } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import type { Card, Category, Image, Named, Product, ProductList, Series, SitemapFeed } from '../contract.js';
 import type { ProductsQuery } from './catalog.dto.js';
 
 const NEW_DAYS = 30;
@@ -17,12 +18,12 @@ const cardInclude = {
 
 type CardRow = Prisma.ProductGetPayload<{ include: typeof cardInclude }>;
 type ImageRow = CardRow['images'][number];
-type Named = { locale: Locale; name: string; slug: string };
+type NamedRow = { locale: Locale; name: string; slug: string };
 
 const pick = <T extends { locale: Locale }>(rows: T[], locale: Locale) => rows.find((r) => r.locale === locale)!;
 const alternates = (rows: { locale: Locale; slug: string }[]) =>
   Object.fromEntries(rows.map((r) => [r.locale, r.slug])) as Record<Locale, string>;
-const named = (rows: Named[], locale: Locale) => ({ name: pick(rows, locale).name, slug: pick(rows, locale).slug, alternates: alternates(rows) });
+const named = (rows: NamedRow[], locale: Locale): Named => ({ name: pick(rows, locale).name, slug: pick(rows, locale).slug, alternates: alternates(rows) });
 const fromPrice = (p: CardRow) => Math.min(...p.variants.map((v) => v.priceCents)); // precio "desde"
 const uniqueBy =<T>(rows: T[], key: (r: T) => string) => [...new Map(rows.map((r) => [key(r), r])).values()];
 
@@ -42,11 +43,11 @@ export class CatalogService {
     return /^(https?:)?\//.test(key) ? key : `${this.imageBase}/${key}`;
   }
 
-  private image(img: ImageRow, locale: Locale) {
+  private image(img: ImageRow, locale: Locale): Image {
     return { url: this.imageUrl(img.r2Key), alt: locale === 'es' ? img.altEs : img.altEn, width: img.width, height: img.height, colorHex: img.colorHex };
   }
 
-  private card(p: CardRow, locale: Locale) {
+  private card(p: CardRow, locale: Locale): Card {
     const t = pick(p.translations, locale);
     return {
       id: p.id,
@@ -62,7 +63,7 @@ export class CatalogService {
     };
   }
 
-  async categories(locale: Locale) {
+  async categories(locale: Locale): Promise<Category[]> {
     const rows = await this.prisma.category.findMany({
       where: { parentId: null },
       orderBy: { sort: 'asc' },
@@ -71,14 +72,14 @@ export class CatalogService {
     return rows.map((c) => ({ ...named(c.translations, locale), children: c.children.map((ch) => named(ch.translations, locale)) }));
   }
 
-  async series(locale: Locale) {
+  async series(locale: Locale): Promise<Series[]> {
     const rows = await this.prisma.series.findMany({ orderBy: { sort: 'asc' }, include: { translations: true } });
     return rows.map((s) => ({ code: s.code, description: pick(s.translations, locale).description, ...named(s.translations, locale) }));
   }
 
   // ponytail: filtra, ordena y pagina en memoria (el precio "desde" es el mínimo de las variantes y
   // Prisma no ordena por agregados). Techo: unos miles de productos; luego pasar a SQL con un precio desnormalizado.
-  async products(query: ProductsQuery) {
+  async products(query: ProductsQuery): Promise<ProductList> {
     const { locale, category, series, q, size, color, minPrice, maxPrice, sort, limit } = query;
     const bySlug = (slug: string) => ({ translations: { some: { locale, slug } } });
 
@@ -129,7 +130,7 @@ export class CatalogService {
     };
   }
 
-  async product(slug: string, locale: Locale) {
+  async product(slug: string, locale: Locale): Promise<Product> {
     const p = await this.prisma.product.findFirst({
       where: { status: ProductStatus.PUBLISHED, translations: { some: { locale, slug } } },
       include: {
@@ -162,7 +163,7 @@ export class CatalogService {
       subtitle: t.subtitle,
       description: t.description,
       techSpecs: t.techSpecs as Record<string, string>,
-      updatedAt: p.updatedAt,
+      updatedAt: p.updatedAt.toISOString(),
       alternates: alternates(p.translations),
       category: {
         ...named(p.category.translations, locale),
@@ -184,7 +185,7 @@ export class CatalogService {
   }
 
   // Feed liviano para sitemap.xml: los dos idiomas en una sola llamada (hreflang necesita ambos slugs).
-  async sitemap() {
+  async sitemap(): Promise<SitemapFeed> {
     const [products, categories, series] = await Promise.all([
       this.prisma.product.findMany({
         where: { status: ProductStatus.PUBLISHED },
@@ -194,7 +195,7 @@ export class CatalogService {
       this.prisma.series.findMany({ select: { translations: { select: { locale: true, slug: true } } } }),
     ]);
     return {
-      products: products.map((p) => ({ updatedAt: p.updatedAt, slugs: alternates(p.translations), images: p.images.map((i) => this.imageUrl(i.r2Key)) })),
+      products: products.map((p) => ({ updatedAt: p.updatedAt.toISOString(), slugs: alternates(p.translations), images: p.images.map((i) => this.imageUrl(i.r2Key)) })),
       categories: categories.map((c) => ({ slugs: alternates(c.translations) })),
       series: series.map((s) => ({ slugs: alternates(s.translations) })),
     };

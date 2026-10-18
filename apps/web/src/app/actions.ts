@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { ADMIN_COOKIE } from "@/lib/admin";
-import { API_URL } from "@/lib/api";
+import { API_URL, type LoginResponse } from "@/lib/api";
 
 // BFF: el navegador nunca llama a la API directo (plan §1)
 export async function subscribe(_: unknown, form: FormData): Promise<"ok" | "error"> {
@@ -28,7 +28,7 @@ export async function login(_: unknown, form: FormData): Promise<{ error: "error
   }).catch(() => null);
   if (!res?.ok) return { error: res?.status === 429 ? "throttled" : "error", email };
 
-  const { accessToken, expiresIn } = (await res.json()) as { accessToken: string; expiresIn: number };
+  const { accessToken, expiresIn } = (await res.json()) as LoginResponse;
   (await cookies()).set(ADMIN_COOKIE, accessToken, {
     httpOnly: true, // JS del navegador no lo lee (XSS)
     secure: process.env.NODE_ENV === "production",

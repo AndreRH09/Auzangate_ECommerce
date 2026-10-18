@@ -2,10 +2,11 @@ import { type CanActivate, type ExecutionContext, Injectable, UnauthorizedExcept
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
 import type { Env } from '../config/env.js';
+import type { Admin } from '../contract.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { verifyToken } from './token.js';
 
-export type AdminRequest = Request & { admin: { id: string; email: string; name: string } };
+export type AdminRequest = Request & { admin: Admin };
 
 // Bearer token + usuario ADMIN activo. El rol se lee de la BD en cada request (no del token):
 // si se bloquea al admin, pierde acceso al instante. El tráfico del admin es mínimo, el SELECT no pesa.
