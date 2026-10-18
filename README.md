@@ -70,14 +70,12 @@ pnpm db:seed
 
 ## Despliegue con Docker (prueba local del stack de producción)
 
-> Pendiente: requiere `apps/api/Dockerfile` (próximo paso de F0).
-
 ```powershell
 Copy-Item .env.production.example .env.production   # edita las contraseñas
-docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production up -d --build
+docker compose -p auzangate-prod -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production up -d --build
 ```
 
-En producción MySQL no publica puertos: solo la API (3000) es accesible.
+En producción MySQL no publica puertos: solo la API (3000) es accesible. `-p auzangate-prod` usa otro nombre de proyecto, así no pisa los contenedores ni el volumen de dev. Para apagarlo: `docker compose -p auzangate-prod down`.
 
 ## Flujo de git
 

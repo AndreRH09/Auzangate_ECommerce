@@ -1,6 +1,7 @@
 # Base compartida por dev y prod. No publica puertos: eso lo decide cada entorno.
 #   dev:  docker compose up -d                       (suma docker-compose.override.yml solo)
-#   prod: docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production up -d --build
+#   prod: docker compose -p auzangate-prod -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production up -d --build
+#   (-p separa contenedores y volumen de los de dev)
 name: auzangate
 
 services:
