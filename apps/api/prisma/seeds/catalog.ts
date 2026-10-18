@@ -37,36 +37,42 @@ const COLORS = [
   { hex: '#9C6B4E', name: { es: 'Arcilla', en: 'Clay' } },
 ];
 
-// [modelo, tipo ES, tipo EN, categoría hija, serie, precio S/, subtítulo ES, subtítulo EN, specs]
+// Convención de nombres: "{Tipo} {código}", sin nombre de modelo ni adjetivos.
+// Código = A (Auzangate) + inicial de la serie (C/W/S/V/N) + número de 2 dígitos por serie.
+// La versión de mujer antepone F al mismo código: AW01 (hombre) / FAW01 (mujer).
+// Fotos: products/{código}/{vista}.{ext}, mínimo 3 vistas: front, rear, side.
+
+// [código, tipo ES, tipo EN, categoría hija, serie, precio S/, subtítulo ES, subtítulo EN, specs]
 type Line = [string, string, string, ChildKey, string, number, string, string, Record<string, string>];
 
 const APPAREL: Line[] = [
-  ['Kuntur', 'Casaca', 'Jacket', 'casacas', 'WARI', 489, 'Pluma 650 · -10 °C', '650 down · -10 °C', { peso: '420 g', relleno: 'Pluma 650 FP', temperatura: '-10 °C' }],
-  ['Wayra', 'Cortavientos', 'Windbreaker', 'casacas', 'NASCA', 259, 'Ripstop 40D · 180 g', 'Ripstop 40D · 180 g', { peso: '180 g', tela: 'Nylon ripstop 40D' }],
-  ['Rumi', 'Softshell', 'Softshell', 'casacas', 'VICUS', 389, 'Softshell 3 capas · DWR', '3-layer softshell · DWR', { peso: '390 g', acabado: 'DWR sin PFC' }],
-  ['Illapa', 'Casaca impermeable', 'Rain jacket', 'casacas', 'WARI', 629, 'Membrana 20K · 3 capas', '20K membrane · 3 layers', { peso: '360 g', impermeabilidad: '20 000 mm', transpirabilidad: '20 000 g/m²' }],
-  ['Qocha', 'Polar', 'Fleece', 'capas', 'CARAL', 219, 'Polar 300 g/m²', '300 g/m² fleece', { peso: '410 g', gramaje: '300 g/m²' }],
-  ['Puna', 'Chaleco', 'Vest', 'capas', 'SICAN', 339, 'Pluma 800 · 210 g', '800 down · 210 g', { peso: '210 g', relleno: 'Pluma 800 FP' }],
-  ['Sillar', 'Polo técnico', 'Tech tee', 'capas', 'NASCA', 119, 'Merino 150 g/m²', 'Merino 150 g/m²', { peso: '140 g', gramaje: '150 g/m²', fibra: 'Merino 87 %' }],
-  ['Ichu', 'Pantalón', 'Pants', 'pantalones', 'VICUS', 279, 'Stretch 4 vías · UPF 50', '4-way stretch · UPF 50', { peso: '340 g', protección: 'UPF 50' }],
+  ['AW01', 'Casaca', 'Jacket', 'casacas', 'WARI', 489, 'Pluma 650 · -10 °C', '650 down · -10 °C', { peso: '420 g', relleno: 'Pluma 650 FP', temperatura: '-10 °C' }],
+  ['AN01', 'Cortavientos', 'Windbreaker', 'casacas', 'NASCA', 259, 'Ripstop 40D · 180 g', 'Ripstop 40D · 180 g', { peso: '180 g', tela: 'Nylon ripstop 40D' }],
+  ['AV01', 'Softshell', 'Softshell', 'casacas', 'VICUS', 389, 'Softshell 3 capas · DWR', '3-layer softshell · DWR', { peso: '390 g', acabado: 'DWR sin PFC' }],
+  ['AW02', 'Casaca', 'Jacket', 'casacas', 'WARI', 629, 'Membrana 20K · 3 capas', '20K membrane · 3 layers', { peso: '360 g', impermeabilidad: '20 000 mm', transpirabilidad: '20 000 g/m²' }],
+  ['AC02', 'Polar', 'Fleece', 'capas', 'CARAL', 219, 'Polar 300 g/m²', '300 g/m² fleece', { peso: '410 g', gramaje: '300 g/m²' }],
+  ['AS01', 'Chaleco', 'Vest', 'capas', 'SICAN', 339, 'Pluma 800 · 210 g', '800 down · 210 g', { peso: '210 g', relleno: 'Pluma 800 FP' }],
+  ['AN02', 'Polo', 'Tee', 'capas', 'NASCA', 119, 'Merino 150 g/m²', 'Merino 150 g/m²', { peso: '140 g', gramaje: '150 g/m²', fibra: 'Merino 87 %' }],
+  ['AV02', 'Pantalón', 'Pants', 'pantalones', 'VICUS', 279, 'Stretch 4 vías · UPF 50', '4-way stretch · UPF 50', { peso: '340 g', protección: 'UPF 50' }],
 ];
 
-// [modelo, tipo ES, tipo EN, serie, precio S/, subtítulo ES, subtítulo EN, specs]
+// [código, tipo ES, tipo EN, serie, precio S/, subtítulo ES, subtítulo EN, specs]
 const ACCESSORIES: [string, string, string, string, number, string, string, Record<string, string>][] = [
-  ['Nevado', 'Gorro', 'Beanie', 'CARAL', 79, 'Merino · talla única', 'Merino · one size', { fibra: 'Merino 100 %' }],
-  ['Mitma', 'Guantes', 'Gloves', 'WARI', 129, 'Softshell · pantalla táctil', 'Softshell · touchscreen', { peso: '80 g' }],
-  ['Chaski', 'Cuello', 'Neck gaiter', 'NASCA', 59, 'UPF 50 · 40 g', 'UPF 50 · 40 g', { peso: '40 g', protección: 'UPF 50' }],
-  ['Apu', 'Primera capa', 'Base layer', 'CARAL', 169, 'Merino 200 g/m²', 'Merino 200 g/m²', { gramaje: '200 g/m²', fibra: 'Merino 100 %' }],
+  ['AC01', 'Gorro', 'Beanie', 'CARAL', 79, 'Merino · talla única', 'Merino · one size', { fibra: 'Merino 100 %' }],
+  ['AW03', 'Guantes', 'Gloves', 'WARI', 129, 'Softshell · pantalla táctil', 'Softshell · touchscreen', { peso: '80 g' }],
+  ['AN03', 'Cuello', 'Neck gaiter', 'NASCA', 59, 'UPF 50 · 40 g', 'UPF 50 · 40 g', { peso: '40 g', protección: 'UPF 50' }],
+  ['AC03', 'Primera capa', 'Base layer', 'CARAL', 169, 'Merino 200 g/m²', 'Merino 200 g/m²', { gramaje: '200 g/m²', fibra: 'Merino 100 %' }],
 ];
 
-// Fotos reales servidas por la web desde public/Products (rutas que empiezan con "/" pasan tal cual).
+// Fotos reales servidas por la web desde public/products (rutas que empiezan con "/" pasan tal cual).
 const REAL_PHOTOS: Record<string, { key: string; width: number; height: number }[]> = {
-  Nevado: [
-    { key: '/Products/AC01Beanie/front.png', width: 1341, height: 988 },
-    { key: '/Products/AC01Beanie/back.png', width: 1233, height: 934 },
-    { key: '/Products/AC01Beanie/down.png', width: 1090, height: 829 },
+  AC01: [
+    { key: '/products/AC01/front.png', width: 1341, height: 988 },
+    { key: '/products/AC01/rear.png', width: 1233, height: 934 },
+    { key: '/products/AC01/side.png', width: 1090, height: 829 },
   ],
 };
+const VIEWS = ['front', 'rear', 'side'] as const;
 
 const slugify =(s: string) =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -121,19 +127,19 @@ async function seedCategories() {
 }
 
 type ProductInput = {
-  model: string; typeEs: string; typeEn: string; suffix?: T; categoryId: string; seriesId: string;
+  code: string; typeEs: string; typeEn: string; categoryId: string; seriesId: string;
   seriesCode: string; price: number; subtitle: T; specs: Record<string, string>; sizes: string[];
 };
 
 async function createProduct(i: number, p: ProductInput) {
-  const nameEs = `${p.typeEs} ${p.model}${p.suffix ? ` ${p.suffix.es}` : ''}`;
-  const nameEn = `${p.model} ${p.typeEn}${p.suffix ? ` ${p.suffix.en}` : ''}`;
+  const nameEs = `${p.typeEs} ${p.code}`;
+  const nameEn = `${p.typeEn} ${p.code}`;
   const colors = COLORS.slice(0, 2 + (i % 3));
-  const skuBase = `AUZ-${p.model.toUpperCase()}${p.suffix ? `-${p.suffix.es[0]!.toUpperCase()}` : ''}`;
   const techSpecs = { ...p.specs, serie: p.seriesCode };
 
   await prisma.product.create({
     data: {
+      code: p.code,
       categoryId: p.categoryId,
       seriesId: p.seriesId,
       status: i === 7 ? ProductStatus.DRAFT : ProductStatus.PUBLISHED, // uno en borrador para probar el admin
@@ -147,7 +153,7 @@ async function createProduct(i: number, p: ProductInput) {
       variants: {
         create: colors.flatMap((c, ci) =>
           p.sizes.map((size, si) => ({
-            sku: `${skuBase}-${c.name.es.slice(0, 3).toUpperCase()}-${size}`,
+            sku: `${p.code}-${c.name.es.slice(0, 3).toUpperCase()}-${size}`, // AW01-GRA-M
             colorHex: c.hex,
             colorName: c.name,
             size,
@@ -157,13 +163,13 @@ async function createProduct(i: number, p: ProductInput) {
         ),
       },
       images: {
-        // ponytail: fotos reales donde existen (apps/web/public/Products); el resto, placeholders MOCK de picsum.
+        // ponytail: fotos reales donde existen (apps/web/public/products); el resto, placeholders MOCK de picsum.
         // Las fotos definitivas se suben a R2 desde el admin.
-        create: (REAL_PHOTOS[p.model] ?? [0, 1, 2].map((n) => ({ key: `https://picsum.photos/seed/${skuBase}-${n}/1600/2000`, width: 1600, height: 2000 }))).map(
+        create: (REAL_PHOTOS[p.code] ?? VIEWS.map((v) => ({ key: `https://picsum.photos/seed/${p.code}-${v}/1600/2000`, width: 1600, height: 2000 }))).map(
           (img, sort) => ({
             r2Key: img.key,
-            altEs: `${nameEs}, vista ${sort + 1}`,
-            altEn: `${nameEn}, view ${sort + 1}`,
+            altEs: `${nameEs}, vista ${['frontal', 'posterior', 'lateral'][sort] ?? sort + 1}`,
+            altEn: `${nameEn}, ${VIEWS[sort] ?? sort + 1} view`,
             width: img.width,
             height: img.height,
             sort,
@@ -185,20 +191,20 @@ export async function seedCatalog() {
 
   const products: ProductInput[] = [];
   for (const gender of ['hombre', 'mujer'] as const) {
-    for (const [model, typeEs, typeEn, child, seriesCode, price, subEs, subEn, specs] of APPAREL) {
+    for (const [code, typeEs, typeEn, child, seriesCode, price, subEs, subEn, specs] of APPAREL) {
       products.push({
-        model, typeEs, typeEn, seriesCode, price, specs,
+        typeEs, typeEn, seriesCode, price, specs,
+        code: gender === 'mujer' ? `F${code}` : code,
         seriesId: series.get(seriesCode)!,
-        suffix: gender === 'hombre' ? { es: 'Hombre', en: 'Men' } : { es: 'Mujer', en: 'Women' },
         categoryId: categories.get(`${gender}/${child}`)!,
         subtitle: { es: subEs, en: subEn },
         sizes: gender === 'hombre' ? ['S', 'M', 'L', 'XL'] : ['XS', 'S', 'M', 'L'],
       });
     }
   }
-  for (const [model, typeEs, typeEn, seriesCode, price, subEs, subEn, specs] of ACCESSORIES) {
+  for (const [code, typeEs, typeEn, seriesCode, price, subEs, subEn, specs] of ACCESSORIES) {
     products.push({
-      model, typeEs, typeEn, seriesCode, price, specs,
+      code, typeEs, typeEn, seriesCode, price, specs,
       seriesId: series.get(seriesCode)!,
       categoryId: categories.get('accesorios')!,
       subtitle: { es: subEs, en: subEn },

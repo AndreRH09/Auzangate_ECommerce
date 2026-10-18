@@ -162,6 +162,7 @@ model SeriesTranslation {
 
 model Product {
   id         String        @id @default(cuid())
+  code       String        @unique @db.VarChar(12) // AC01 / FAW01: [F si es mujer] A + inicial de serie + nº
   categoryId String
   seriesId   String?
   status     ProductStatus @default(DRAFT)

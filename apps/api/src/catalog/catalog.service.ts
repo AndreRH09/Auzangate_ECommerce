@@ -156,6 +156,7 @@ export class CatalogService {
     const t = pick(p.translations, locale);
     return {
       id: p.id,
+      code: p.code,
       slug: t.slug,
       name: t.name,
       subtitle: t.subtitle,

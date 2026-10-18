@@ -33,6 +33,7 @@ export type ProductList = {
 
 export type Product = {
   id: string;
+  code: string;
   slug: string;
   name: string;
   subtitle: string;
