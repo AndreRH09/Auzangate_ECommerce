@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../config/env.js';
-import { Prisma, ProductStatus, type Locale } from '../generated/prisma/client.js';
+import { Gender, Prisma, ProductStatus, type Locale } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { Card, Category, Image, Named, Product, ProductList, Series, SitemapFeed } from '../contract.js';
 import type { ProductsQuery } from './catalog.dto.js';
@@ -25,6 +25,8 @@ const alternates = (rows: { locale: Locale; slug: string }[]) =>
   Object.fromEntries(rows.map((r) => [r.locale, r.slug])) as Record<Locale, string>;
 const named = (rows: NamedRow[], locale: Locale): Named => ({ name: pick(rows, locale).name, slug: pick(rows, locale).slug, alternates: alternates(rows) });
 const fromPrice = (p: CardRow) => Math.min(...p.variants.map((v) => v.priceCents)); // precio "desde"
+// Claves de R2 -> URL pública. URLs absolutas o rutas del front ("/products/...") pasan tal cual.
+export const toImageUrl = (key: string, base: string) => (/^(https?:)?\//.test(key) ? key : `${base}/${key}`);
 const uniqueBy =<T>(rows: T[], key: (r: T) => string) => [...new Map(rows.map((r) => [key(r), r])).values()];
 
 @Injectable()
@@ -38,9 +40,8 @@ export class CatalogService {
     this.imageBase = config.get('IMAGE_BASE_URL', { infer: true });
   }
 
-  // Claves de R2 -> URL pública. URLs absolutas o rutas del front ("/Products/...") pasan tal cual.
   private imageUrl(key: string) {
-    return /^(https?:)?\//.test(key) ? key : `${this.imageBase}/${key}`;
+    return toImageUrl(key, this.imageBase);
   }
 
   private image(img: ImageRow, locale: Locale): Image {
@@ -80,7 +81,7 @@ export class CatalogService {
   // ponytail: filtra, ordena y pagina en memoria (el precio "desde" es el mínimo de las variantes y
   // Prisma no ordena por agregados). Techo: unos miles de productos; luego pasar a SQL con un precio desnormalizado.
   async products(query: ProductsQuery): Promise<ProductList> {
-    const { locale, category, series, q, size, color, minPrice, maxPrice, sort, limit } = query;
+    const { locale, category, series, gender, q, size, color, minPrice, maxPrice, sort, limit } = query;
     const bySlug = (slug: string) => ({ translations: { some: { locale, slug } } });
 
     const rows = await this.prisma.product.findMany({
@@ -95,6 +96,7 @@ export class CatalogService {
         },
         ...(category && { category: { OR: [bySlug(category), { parent: bySlug(category) }] } }),
         ...(series && { series: bySlug(series) }),
+        ...(gender && { gender: { in: [Gender.UNISEX, gender === 'men' ? Gender.MEN : Gender.WOMEN] } }),
       },
       include: cardInclude,
     });
@@ -158,6 +160,7 @@ export class CatalogService {
     return {
       id: p.id,
       code: p.code,
+      gender: p.gender,
       slug: t.slug,
       name: t.name,
       subtitle: t.subtitle,

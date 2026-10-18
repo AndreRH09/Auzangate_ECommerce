@@ -1,4 +1,4 @@
-// Catálogo: series, categorías y 22 productos ES/EN.
+// Catálogo: series, categorías y 13 productos ES/EN, todos unisex.
 // Los precios, specs y stocks son DATOS DE EJEMPLO, no fichas reales.
 import { ProductStatus, type Locale } from '../../src/generated/prisma/client.js';
 import { prisma } from './client.js';
@@ -15,23 +15,19 @@ const SERIES: { code: string; name: T; description: T }[] = [
   { code: 'NASCA', name: { es: 'Nasca', en: 'Nasca' }, description: { es: 'Light. Ropa liviana para climas cálidos.', en: 'Light. Lightweight gear for warm climates.' } },
 ];
 
-// 3 padres; Hombre y Mujer con 3 hijas cada una.
-const PARENTS = [
-  { key: 'hombre', name: { es: 'Hombre', en: 'Men' }, slug: { es: 'hombre', en: 'men' } },
-  { key: 'mujer', name: { es: 'Mujer', en: 'Women' }, slug: { es: 'mujer', en: 'women' } },
-  { key: 'accesorios', name: { es: 'Accesorios', en: 'Accessories' }, slug: { es: 'accesorios', en: 'accessories' } },
-] as const;
-
-const CHILDREN = [
+// Categorías por tipo de prenda, sin nivel Hombre/Mujer: el género es un atributo del producto
+// (la mayoría unisex) y en la tienda es un filtro. El árbol de 2 niveles sigue disponible en el schema.
+const CATEGORIES = [
   { key: 'casacas', name: { es: 'Casacas', en: 'Jackets' }, slug: { es: 'casacas', en: 'jackets' } },
   { key: 'capas', name: { es: 'Capas', en: 'Layers' }, slug: { es: 'capas', en: 'layers' } },
   { key: 'pantalones', name: { es: 'Pantalones', en: 'Pants' }, slug: { es: 'pantalones', en: 'pants' } },
+  { key: 'accesorios', name: { es: 'Accesorios', en: 'Accessories' }, slug: { es: 'accesorios', en: 'accessories' } },
 ] as const;
 
-type ChildKey = (typeof CHILDREN)[number]['key'];
+type CategoryKey = (typeof CATEGORIES)[number]['key'];
 
 // Código de color: 1 letra, usada en el SKU (AC04-C-M) y en la carpeta de fotos (products/AC04/C/front.png).
-// Nunca "F": ese prefijo marca la versión de mujer del código de producto.
+// Nunca "F": ese prefijo marca un corte de mujer en el código de producto.
 const COLORS = [
   { code: 'C', hex: '#242428', name: { es: 'Carbón', en: 'Charcoal' } },
   { code: 'R', hex: '#8A8D8F', name: { es: 'Roca', en: 'Rock' } },
@@ -41,11 +37,11 @@ const COLORS = [
 
 // Convención de nombres: "{Tipo} {código}", sin nombre de modelo ni adjetivos.
 // Código = A (Auzangate) + inicial de la serie (C/W/S/V/N) + número de 2 dígitos por serie.
-// La versión de mujer antepone F al mismo código: AW01 (hombre) / FAW01 (mujer).
+// Las prendas son unisex por defecto. Un corte específico de mujer antepone F al código (FAW01) y lleva gender WOMEN.
 // Fotos: products/{código}/{color}/{vista}.{ext}, mínimo 3 vistas por color: front, rear, side.
 
-// [código, tipo ES, tipo EN, categoría hija, serie, precio S/, subtítulo ES, subtítulo EN, specs]
-type Line = [string, string, string, ChildKey, string, number, string, string, Record<string, string>];
+// [código, tipo ES, tipo EN, categoría, serie, precio S/, subtítulo ES, subtítulo EN, specs]
+type Line = [string, string, string, CategoryKey, string, number, string, string, Record<string, string>];
 
 const APPAREL: Line[] = [
   ['AW01', 'Casaca', 'Jacket', 'casacas', 'WARI', 489, 'Pluma 650 · -10 °C', '650 down · -10 °C', { peso: '420 g', relleno: 'Pluma 650 FP', temperatura: '-10 °C' }],
@@ -108,29 +104,12 @@ async function seedSeries() {
 }
 
 async function seedCategories() {
-  const ids = new Map<string, string>(); // "hombre/casacas" -> id
-  for (const [sort, p] of PARENTS.entries()) {
-    const parent = await prisma.category.create({
-      data: {
-        sort,
-        translations: { create: LOCALES.map((locale) => ({ locale, name: p.name[locale], slug: p.slug[locale] })) },
-      },
+  const ids = new Map<string, string>(); // "casacas" -> id
+  for (const [sort, c] of CATEGORIES.entries()) {
+    const row = await prisma.category.create({
+      data: { sort, translations: { create: LOCALES.map((locale) => ({ locale, name: c.name[locale], slug: c.slug[locale] })) } },
     });
-    ids.set(p.key, parent.id);
-    if (p.key === 'accesorios') continue;
-    for (const [childSort, c] of CHILDREN.entries()) {
-      const child = await prisma.category.create({
-        data: {
-          parentId: parent.id,
-          sort: childSort,
-          translations: {
-            // slug único por idioma: "hombre-casacas" / "men-jackets"
-            create: LOCALES.map((locale) => ({ locale, name: c.name[locale], slug: `${p.slug[locale]}-${c.slug[locale]}` })),
-          },
-        },
-      });
-      ids.set(`${p.key}/${c.key}`, child.id);
-    }
+    ids.set(c.key, row.id);
   }
   return ids;
 }
@@ -202,19 +181,14 @@ export async function seedCatalog() {
 
   const categories = await seedCategories();
 
-  const products: ProductInput[] = [];
-  for (const gender of ['hombre', 'mujer'] as const) {
-    for (const [code, typeEs, typeEn, child, seriesCode, price, subEs, subEn, specs] of APPAREL) {
-      products.push({
-        typeEs, typeEn, seriesCode, price, specs,
-        code: gender === 'mujer' ? `F${code}` : code,
-        seriesId: series.get(seriesCode)!,
-        categoryId: categories.get(`${gender}/${child}`)!,
-        subtitle: { es: subEs, en: subEn },
-        sizes: gender === 'hombre' ? ['S', 'M', 'L', 'XL'] : ['XS', 'S', 'M', 'L'],
-      });
-    }
-  }
+  // todos unisex (gender por defecto), tallas XS a XL
+  const products: ProductInput[] = APPAREL.map(([code, typeEs, typeEn, category, seriesCode, price, subEs, subEn, specs]) => ({
+    code, typeEs, typeEn, seriesCode, price, specs,
+    seriesId: series.get(seriesCode)!,
+    categoryId: categories.get(category)!,
+    subtitle: { es: subEs, en: subEn },
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
+  }));
   for (const [code, typeEs, typeEn, seriesCode, price, subEs, subEn, specs] of ACCESSORIES) {
     products.push({
       code, typeEs, typeEn, seriesCode, price, specs,

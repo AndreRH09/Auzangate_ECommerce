@@ -18,7 +18,7 @@ export async function FilterDrawer({
   action: string;
   q?: string;
   facets: ProductList["facets"];
-  current: { sort?: string; size?: string; color?: string; min?: string; max?: string };
+  current: { sort?: string; gender?: string; size?: string; color?: string; min?: string; max?: string };
   clearHref: string;
 }) {
   const [t, th] = await Promise.all([getTranslations("Listing"), getTranslations("Header")]);
@@ -49,6 +49,19 @@ export async function FilterDrawer({
                 {t(s === "new" ? "sortNew" : s === "price_asc" ? "sortPriceAsc" : "sortPriceDesc")}
               </label>
             ))}
+          </fieldset>
+
+          {/* Hombre/Mujer incluyen lo unisex (la API suma UNISEX a cada uno) */}
+          <fieldset>
+            <legend className="font-semibold">{t("gender")}</legend>
+            <div className="mt-3 flex flex-wrap gap-1">
+              {(["", "men", "women"] as const).map((g) => (
+                <label key={g || "any"} className={`${chip} bg-nieve px-4 has-checked:border-granito has-checked:bg-granito has-checked:text-nieve`}>
+                  <input type="radio" name="gender" value={g} defaultChecked={(current.gender ?? "") === g} className="sr-only" />
+                  {g === "men" ? t("genderMen") : g === "women" ? t("genderWomen") : t("any")}
+                </label>
+              ))}
+            </div>
           </fieldset>
 
           <fieldset>

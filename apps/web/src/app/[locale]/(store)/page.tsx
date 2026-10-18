@@ -30,14 +30,12 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     getProducts(locale, { sort: "new", limit: "8" }),
   ]);
 
-  // 4 tiles: las 3 categorías padre + la serie Wari; la foto es la del producto más nuevo de cada una
-  const wari = series.find((s) => s.code === "WARI");
-  const firstImage = async (filter: Record<string, string>) => (await getProducts(locale, { ...filter, limit: "1" })).items[0]?.images[0];
-  const tiles = await Promise.all([
-    ...categories.map(async (c) => ({ name: c.name, href: `/c/${c.slug}`, image: await firstImage({ category: c.slug }) })),
-    ...(wari ? [firstImage({ series: wari.slug }).then((image) => ({ name: wari.name, href: `/s/${wari.slug}`, image }))] : []),
-  ]);
-  const [men, women] = categories;
+  // tiles: las primeras 4 categorías; la foto es la del producto más nuevo de cada una
+  const firstImage = async (category: string) => (await getProducts(locale, { category, limit: "1" })).items[0]?.images[0];
+  const tiles = await Promise.all(
+    categories.slice(0, 4).map(async (c) => ({ name: c.name, href: `/c/${c.slug}`, image: await firstImage(c.slug) })),
+  );
+  const [first] = categories;
 
   return (
     <main>
@@ -50,8 +48,8 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       <HomeHero
         title={t("heroTitle")}
         data={t("heroData")}
-        primary={{ name: men!.name, href: `/c/${men!.slug}` }}
-        secondary={{ name: women!.name, href: `/c/${women!.slug}` }}
+        primary={{ name: first!.name, href: `/c/${first!.slug}` }}
+        secondary={{ name: t("seeAll"), href: "/buscar?sort=new" }}
       />
       {/* ritmo claro / oscuro / claro: categorías, banda de parches, recién llegado */}
       <div className="mx-auto max-w-[1600px] px-4 md:px-8">

@@ -11,13 +11,14 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 export async function MainMenu({ locale }: { locale: Locale }) {
   const [t, categories, series] = await Promise.all([getTranslations("Header"), getCategories(locale), getSeries(locale)]);
 
+  // Tienda: categorías por tipo de prenda (y sus hijas si las hay); Hombre/Mujer es un filtro del listado
   const groups = [
-    ...categories.map((c) => ({
-      key: c.slug,
-      name: c.name,
-      href: `/c/${c.slug}` as string | null,
-      items: c.children.map((ch) => ({ name: ch.name, href: `/c/${ch.slug}` })),
-    })),
+    {
+      key: "shop",
+      name: t("shop"),
+      href: "/buscar?sort=new" as string | null,
+      items: categories.flatMap((c) => [{ name: c.name, href: `/c/${c.slug}` }, ...c.children.map((ch) => ({ name: ch.name, href: `/c/${ch.slug}` }))]),
+    },
     { key: "series", name: t("series"), href: null, items: series.map((s) => ({ name: s.name, href: `/s/${s.slug}` })) },
   ];
 

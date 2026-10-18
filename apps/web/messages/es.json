@@ -14,7 +14,8 @@
     "home": "Inicio",
     "series": "Series",
     "seeAll": "Ver todo",
-    "shippingNote": "Envíos a todo el Perú"
+    "shippingNote": "Envíos a todo el Perú",
+    "shop": "Tienda"
   },
   "Footer": {
     "shop": "Tienda",
@@ -63,7 +64,10 @@
     "searchEmptyTitle": "Buscar",
     "searchPrompt": "Escribe el nombre de una prenda o un dato técnico, como “merino” o “pluma”.",
     "emptyTitle": "Nada por aquí con estos filtros",
-    "seriesCode": "6384 · {code}"
+    "seriesCode": "6384 · {code}",
+    "gender": "Para",
+    "genderMen": "Hombre",
+    "genderWomen": "Mujer"
   },
   "Product": {
     "new": "Nuevo",
@@ -92,14 +96,50 @@
     "cta": "Volver al inicio"
   },
   "Admin": {
-    "title": "Panel de administración",
-    "soon": "El admin de catálogo llega en el próximo paso.",
     "loginTitle": "Ingresar al admin",
     "email": "Email",
     "password": "Contraseña",
     "submit": "Ingresar",
     "error": "Email o contraseña incorrectos.",
     "throttled": "Demasiados intentos. Espera un minuto.",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "products": "Productos",
+    "search": "Buscar",
+    "searchPlaceholder": "Código o nombre",
+    "status": "Estado",
+    "allStatuses": "Todos los estados",
+    "category": "Categoría",
+    "allCategories": "Todas las categorías",
+    "all": "todo",
+    "series": "Serie",
+    "allSeries": "Todas las series",
+    "sort": "Orden",
+    "sortUpdated": "Últimos editados",
+    "sortCode": "Código",
+    "apply": "Aplicar",
+    "clear": "Limpiar filtros",
+    "count": "{count, plural, =0 {Sin productos} one {# producto} other {# productos}}",
+    "photo": "Foto",
+    "product": "Producto",
+    "variants": "Variantes",
+    "stock": "Stock",
+    "priceFrom": "Desde",
+    "updated": "Editado",
+    "empty": "Ningún producto coincide con los filtros.",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "pageOf": "Página {page} de {pages}",
+    "statusName": {
+      "DRAFT": "Borrador",
+      "PUBLISHED": "Publicado",
+      "ARCHIVED": "Archivado"
+    },
+    "gender": "Género",
+    "allGenders": "Todos los géneros",
+    "genderName": {
+      "UNISEX": "Unisex",
+      "MEN": "Hombre",
+      "WOMEN": "Mujer"
+    }
   }
 }

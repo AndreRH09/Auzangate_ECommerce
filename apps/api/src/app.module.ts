@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { AdminCatalogModule } from './admin/admin-catalog.controller.js';
 import { AuthModule } from './auth/auth.controller.js';
 import { CatalogModule } from './catalog/catalog.module.js';
 import { validateEnv } from './config/env.js';
@@ -21,6 +22,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 20 }]),
     PrismaModule,
     AuthModule,
+    AdminCatalogModule,
     CatalogModule,
     NewsletterModule,
   ],

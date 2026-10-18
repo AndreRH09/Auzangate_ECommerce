@@ -51,7 +51,7 @@ pnpm install
 Copy-Item .env.example .env     # luego edita las contraseñas y JWT_SECRET
 pnpm up                         # MySQL + Adminer en Docker
 pnpm db:migrate                 # crea las tablas
-pnpm db:seed                    # admin + series + zonas de envío + 22 productos de ejemplo
+pnpm db:seed                    # admin + series + zonas de envío + 13 productos de ejemplo
 pnpm api                        # API en http://localhost:3000
 pnpm web                        # tienda en http://localhost:3001 (otra terminal)
 ```
@@ -119,7 +119,9 @@ En producción MySQL no publica puertos: solo la API (3000) es accesible. `-p au
 
 ## Catálogo: códigos y fotos
 
-- Código de producto: `A` + inicial de la serie (`C`/`W`/`S`/`V`/`N`) + número de 2 dígitos. La versión de mujer antepone `F`: `AW01` / `FAW01`.
+- Código de producto: `A` + inicial de la serie (`C`/`W`/`S`/`V`/`N`) + número de 2 dígitos (`AW01`).
+- Género: atributo del producto (`UNISEX` por defecto, `MEN`, `WOMEN`). Un corte específico de mujer antepone `F` al código (`FAW01`). En la tienda, el filtro Hombre/Mujer incluye lo unisex.
+- Categorías por tipo de prenda (Casacas, Capas, Pantalones, Accesorios), sin nivel Hombre/Mujer.
 - Nombre: `{Tipo} {código}` (por ejemplo, `Casaca FAW01`), sin nombre de modelo.
 - SKU: `{código}-{color}-{talla}`, con color de 1 letra (`C` Carbón, `R` Roca, `V` Musgo, `A` Arcilla; nunca `F`). Ejemplo: `AC04-C-M`.
 - Fotos (temporal, hasta R2): `apps/web/public/products/{código}/{color}/{front,rear,side}.png` y registradas en `REAL_PHOTOS` de `apps/api/prisma/seeds/catalog.ts`. Una foto sin color (`colorHex` null) se muestra con todos los colores.

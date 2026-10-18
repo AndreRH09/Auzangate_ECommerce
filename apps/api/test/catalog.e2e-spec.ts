@@ -5,7 +5,7 @@ import { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
 import { setupApp } from '../src/setup.js';
 
-// Requiere el catálogo del seed (pnpm db:seed catalog): 22 productos, 1 en borrador (Pantalón AV02).
+// Requiere el catálogo del seed (pnpm db:seed catalog): 13 productos unisex, 1 en borrador (Pantalón AV02).
 describe('Catálogo (e2e)', () => {
   let app: INestApplication<App>;
   const get = (url: string) => request(app.getHttpServer()).get(url);
@@ -18,16 +18,16 @@ describe('Catálogo (e2e)', () => {
 
   afterAll(() => app.close());
 
-  it('categorías en árbol, traducidas', async () => {
+  it('categorías por tipo de prenda, traducidas', async () => {
     const { body } = await get('/v1/categories?locale=en').expect(200);
-    expect(body.map((c: { slug: string }) => c.slug)).toEqual(['men', 'women', 'accessories']);
-    expect(body[0].children).toHaveLength(3);
-    expect(body[0].alternates).toEqual({ es: 'hombre', en: 'men' });
+    expect(body.map((c: { slug: string }) => c.slug)).toEqual(['jackets', 'layers', 'pants', 'accessories']);
+    expect(body[0].children).toHaveLength(0);
+    expect(body[0].alternates).toEqual({ es: 'casacas', en: 'jackets' });
   });
 
   it('listado: solo publicados, paginado por cursor', async () => {
     const all = await get('/v1/products?locale=es').expect(200);
-    expect(all.body.total).toBe(21);
+    expect(all.body.total).toBe(12);
 
     const page = await get('/v1/products?locale=es&limit=5').expect(200);
     expect(page.body.items).toHaveLength(5);
@@ -36,26 +36,30 @@ describe('Catálogo (e2e)', () => {
     expect(next.body.items[0].id).not.toBe(page.body.items[0].id);
   });
 
-  it('categoría padre incluye hijas; orden por precio', async () => {
-    const { body } = await get('/v1/products?locale=es&category=hombre&sort=price_asc').expect(200);
-    expect(body.total).toBe(8);
+  it('filtro por categoría; orden por precio', async () => {
+    const { body } = await get('/v1/products?locale=es&category=casacas&sort=price_asc').expect(200);
+    expect(body.total).toBe(4);
     const prices = body.items.map((p: { priceCents: number }) => p.priceCents);
     expect(prices).toEqual([...prices].sort((a, b) => a - b));
   });
 
   it('filtros de serie, talla y búsqueda', async () => {
-    expect((await get('/v1/products?locale=es&series=wari').expect(200)).body.total).toBe(5);
-    expect((await get('/v1/products?locale=es&size=XS').expect(200)).body.total).toBe(9);
-    // "aw01" encuentra la versión de hombre (AW01) y la de mujer (FAW01)
-    expect((await get('/v1/products?locale=en&q=aw01').expect(200)).body.total).toBe(2);
+    expect((await get('/v1/products?locale=es&series=wari').expect(200)).body.total).toBe(3);
+    expect((await get('/v1/products?locale=es&size=XS').expect(200)).body.total).toBe(8);
+    expect((await get('/v1/products?locale=en&q=aw01').expect(200)).body.total).toBe(1);
+  });
+
+  it('Hombre y Mujer incluyen lo unisex', async () => {
+    expect((await get('/v1/products?locale=es&gender=men').expect(200)).body.total).toBe(12);
+    expect((await get('/v1/products?locale=es&gender=women').expect(200)).body.total).toBe(12);
+    await get('/v1/products?gender=kids').expect(400);
   });
 
   it('ficha con slugs alternos; borrador da 404', async () => {
-    const { body } = await get('/v1/products/casaca-faw01?locale=es').expect(200);
-    expect(body.code).toBe('FAW01');
-    expect(body.alternates.en).toBe('jacket-faw01');
-    expect(body.category.parent.slug).toBe('mujer');
-    expect(body.variants[0].sku).toMatch(/^FAW01-[A-Z]-/);
+    const { body } = await get('/v1/products/casaca-aw01?locale=es').expect(200);
+    expect(body).toMatchObject({ code: 'AW01', gender: 'UNISEX', category: { slug: 'casacas', parent: null } });
+    expect(body.alternates.en).toBe('jacket-aw01');
+    expect(body.variants[0].sku).toMatch(/^AW01-[A-Z]-/);
     await get('/v1/products/pantalon-av02?locale=es').expect(404);
   });
 
@@ -66,7 +70,7 @@ describe('Catálogo (e2e)', () => {
 
   it('feed del sitemap', async () => {
     const { body } = await get('/v1/catalog/sitemap').expect(200);
-    expect(body.products).toHaveLength(21);
+    expect(body.products).toHaveLength(12);
     expect(body.products[0].slugs).toHaveProperty('en');
   });
 });

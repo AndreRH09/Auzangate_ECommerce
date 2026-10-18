@@ -9,7 +9,7 @@ import { FILTER_DRAWER_ID, FilterDrawer } from "./FilterDrawer";
 import { Pagination } from "./Pagination";
 import { ProductGrid } from "./ProductGrid";
 
-export type ListingParams = Partial<Record<"sort" | "size" | "color" | "min" | "max" | "cursor", string>>;
+export type ListingParams = Partial<Record<"sort" | "gender" | "size" | "color" | "min" | "max" | "cursor", string>>;
 
 const LIMIT = 24;
 const soles = (v?: string) => (v && /^\d+$/.test(v) ? String(Number(v) * 100) : undefined);
@@ -37,6 +37,7 @@ export async function ProductListing({
   const t = await getTranslations("Listing");
   // la URL es input del usuario: lo que no calce se ignora (la API respondería 400 y la página 500)
   const sort = ["new", "price_asc", "price_desc"].includes(params.sort ?? "") ? params.sort : undefined;
+  const gender = ["men", "women"].includes(params.gender ?? "") ? params.gender : undefined;
   const size = params.size && params.size.length <= 8 ? params.size : undefined;
   const color = params.color && /^[0-9a-f]{6}$/i.test(params.color) ? params.color : undefined;
   const cursor = params.cursor && /^\d+$/.test(params.cursor) ? params.cursor : undefined;
@@ -44,6 +45,7 @@ export async function ProductListing({
   const list = await getProducts(locale, {
     ...base,
     sort,
+    gender,
     size,
     color: color && `#${color}`,
     minPrice: soles(min),
@@ -57,8 +59,8 @@ export async function ProductListing({
     return `${path}${qs.size ? `?${qs}` : ""}`;
   };
   const offset = Number(cursor) || 0;
-  const active = [size, color, min, max].filter(Boolean).length + (sort && sort !== "new" ? 1 : 0);
-  const clearHref = href({ sort: undefined, size: undefined, color: undefined, min: undefined, max: undefined, cursor: undefined });
+  const active = [gender, size, color, min, max].filter(Boolean).length + (sort && sort !== "new" ? 1 : 0);
+  const clearHref = href({ sort: undefined, gender: undefined, size: undefined, color: undefined, min: undefined, max: undefined, cursor: undefined });
 
   return (
     <main className="mx-auto max-w-[1600px] px-4 pt-6 md:px-8">
@@ -100,7 +102,7 @@ export async function ProductListing({
         action={`/${locale}${path}`}
         q={base.q}
         facets={list.facets}
-        current={{ sort, size, color, min, max }}
+        current={{ sort, gender, size, color, min, max }}
         clearHref={clearHref}
       />
     </main>

@@ -7,6 +7,9 @@ export class LocaleQuery {
   locale: Locale = Locale.es;
 }
 
+export const GENDERS = ['men', 'women'] as const;
+export type GenderFilter = (typeof GENDERS)[number];
+
 export const SORTS = ['new', 'price_asc', 'price_desc'] as const;
 export type Sort = (typeof SORTS)[number];
 
@@ -18,6 +21,10 @@ export class ProductsQuery extends LocaleQuery {
   /** slug de serie */
   @IsOptional() @IsString() @MaxLength(80)
   series?: string;
+
+  /** men = MEN + UNISEX; women = WOMEN + UNISEX */
+  @IsOptional() @IsIn(GENDERS)
+  gender?: GenderFilter;
 
   /** búsqueda por texto en nombre, subtítulo y descripción del idioma activo */
   @IsOptional() @IsString() @MaxLength(80)

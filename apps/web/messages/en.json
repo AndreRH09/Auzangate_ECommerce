@@ -14,7 +14,8 @@
     "home": "Home",
     "series": "Series",
     "seeAll": "See all",
-    "shippingNote": "Shipping across Peru"
+    "shippingNote": "Shipping across Peru",
+    "shop": "Shop"
   },
   "Footer": {
     "shop": "Shop",
@@ -63,7 +64,10 @@
     "searchEmptyTitle": "Search",
     "searchPrompt": "Type a product name or a tech detail, like “merino” or “down”.",
     "emptyTitle": "Nothing here with these filters",
-    "seriesCode": "6384 · {code}"
+    "seriesCode": "6384 · {code}",
+    "gender": "For",
+    "genderMen": "Men",
+    "genderWomen": "Women"
   },
   "Product": {
     "new": "New",
@@ -92,14 +96,50 @@
     "cta": "Back to home"
   },
   "Admin": {
-    "title": "Admin panel",
-    "soon": "The catalog admin arrives in the next step.",
     "loginTitle": "Admin sign in",
     "email": "Email",
     "password": "Password",
     "submit": "Sign in",
     "error": "Wrong email or password.",
     "throttled": "Too many attempts. Wait a minute.",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "products": "Products",
+    "search": "Search",
+    "searchPlaceholder": "Code or name",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "category": "Category",
+    "allCategories": "All categories",
+    "all": "all",
+    "series": "Series",
+    "allSeries": "All series",
+    "sort": "Sort",
+    "sortUpdated": "Recently edited",
+    "sortCode": "Code",
+    "apply": "Apply",
+    "clear": "Clear filters",
+    "count": "{count, plural, =0 {No products} one {# product} other {# products}}",
+    "photo": "Photo",
+    "product": "Product",
+    "variants": "Variants",
+    "stock": "Stock",
+    "priceFrom": "From",
+    "updated": "Edited",
+    "empty": "No products match the filters.",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {pages}",
+    "statusName": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published",
+      "ARCHIVED": "Archived"
+    },
+    "gender": "Gender",
+    "allGenders": "All genders",
+    "genderName": {
+      "UNISEX": "Unisex",
+      "MEN": "Men",
+      "WOMEN": "Women"
+    }
   }
 }

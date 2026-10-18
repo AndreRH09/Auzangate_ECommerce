@@ -8,7 +8,8 @@ import { PrismaService } from '../src/prisma/prisma.service.js';
 import { setupApp } from '../src/setup.js';
 
 // Crea sus propios usuarios (no depende del seed). Re-ejecutable.
-const ADMIN = { email: 'e2e-admin@test.local', password: 'clave-de-prueba-123' };
+// Admin propio, distinto del de test/admin.ts: este test lo bloquea y los archivos corren en paralelo.
+const ADMIN = { email: 'e2e-auth-admin@test.local', password: 'clave-de-prueba-123' };
 const CUSTOMER = { email: 'e2e-cliente@test.local', password: 'clave-de-prueba-123' };
 
 describe('Auth (e2e)', () => {

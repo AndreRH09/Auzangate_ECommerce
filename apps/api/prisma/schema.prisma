@@ -33,6 +33,14 @@ enum ProductStatus {
   ARCHIVED
 }
 
+// La mayoría de prendas son unisex; MEN/WOMEN solo para cortes específicos.
+// En la tienda, el filtro "Hombre" muestra MEN + UNISEX y "Mujer" muestra WOMEN + UNISEX.
+enum Gender {
+  UNISEX
+  MEN
+  WOMEN
+}
+
 enum OrderStatus {
   PENDING_PAYMENT
   PAID
@@ -162,9 +170,10 @@ model SeriesTranslation {
 
 model Product {
   id         String        @id @default(cuid())
-  code       String        @unique @db.VarChar(12) // AC01 / FAW01: [F si es mujer] A + inicial de serie + nº
+  code       String        @unique @db.VarChar(12) // AC01 / FAW01: [F si es corte de mujer] A + inicial de serie + nº
   categoryId String
   seriesId   String?
+  gender     Gender        @default(UNISEX)
   status     ProductStatus @default(DRAFT)
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt // alimenta lastModified del sitemap
@@ -175,7 +184,7 @@ model Product {
   variants     ProductVariant[]
   images       ProductImage[]
 
-  @@index([status])
+  @@index([status, gender])
 }
 
 model ProductTranslation {

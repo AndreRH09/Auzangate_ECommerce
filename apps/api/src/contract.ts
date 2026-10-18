@@ -37,9 +37,12 @@ export type ProductList = {
 
 export type Variant = { id: string; sku: string; colorHex: string; colorName: string; size: string; priceCents: number; stock: number };
 
+export type Gender = 'UNISEX' | 'MEN' | 'WOMEN';
+
 export type Product = {
   id: string;
   code: string;
+  gender: Gender;
   slug: string;
   name: string;
   subtitle: string;
@@ -62,3 +65,23 @@ export type SitemapFeed = {
 
 export type Admin = { id: string; email: string; name: string };
 export type LoginResponse = { accessToken: string; expiresIn: number };
+
+// --- Admin de catálogo ---
+export type ProductStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+
+export type AdminProductRow = {
+  id: string;
+  code: string;
+  name: string; // en el idioma pedido; el código si aún no tiene traducción
+  status: ProductStatus;
+  gender: Gender;
+  category: string;
+  series: string | null; // código: CARAL, WARI…
+  variants: number;
+  stock: number; // suma de todas las variantes
+  priceFromCents: number | null; // null = sin variantes
+  imageUrl: string | null;
+  updatedAt: string;
+};
+
+export type AdminProductList = { total: number; page: number; pageSize: number; items: AdminProductRow[] };
