@@ -58,7 +58,16 @@ const ACCESSORIES: [string, string, string, string, number, string, string, Reco
   ['Apu', 'Primera capa', 'Base layer', 'CARAL', 169, 'Merino 200 g/m²', 'Merino 200 g/m²', { gramaje: '200 g/m²', fibra: 'Merino 100 %' }],
 ];
 
-const slugify = (s: string) =>
+// Fotos reales servidas por la web desde public/Products (rutas que empiezan con "/" pasan tal cual).
+const REAL_PHOTOS: Record<string, { key: string; width: number; height: number }[]> = {
+  Nevado: [
+    { key: '/Products/AC01Beanie/front.png', width: 1341, height: 988 },
+    { key: '/Products/AC01Beanie/back.png', width: 1233, height: 934 },
+    { key: '/Products/AC01Beanie/down.png', width: 1090, height: 829 },
+  ],
+};
+
+const slugify =(s: string) =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
 // Stock determinista (sin Math.random) para que cada reset dé lo mismo; algunos en 0 para ver "Agotado".
@@ -131,6 +140,7 @@ async function createProduct(i: number, p: ProductInput) {
       categoryId: p.categoryId,
       seriesId: p.seriesId,
       status: i === 7 ? ProductStatus.DRAFT : ProductStatus.PUBLISHED, // uno en borrador para probar el admin
+      createdAt: new Date(Date.now() - i * 4 * 864e5), // escalonado: solo los ~8 primeros salen "NUEVO" (< 30 días)
       translations: {
         create: [
           { locale: 'es', name: nameEs, slug: slugify(nameEs), subtitle: p.subtitle.es, description: `${nameEs}. ${p.subtitle.es}.`, techSpecs },
@@ -150,15 +160,18 @@ async function createProduct(i: number, p: ProductInput) {
         ),
       },
       images: {
-        // ponytail: claves mock; las fotos reales se suben a R2 desde el admin (F1)
-        create: [0, 1, 2].map((sort) => ({
-          r2Key: `seed/${slugify(nameEs)}-${sort + 1}.jpg`,
-          altEs: `${nameEs}, vista ${sort + 1}`,
-          altEn: `${nameEn}, view ${sort + 1}`,
-          width: 1600,
-          height: 2000,
-          sort,
-        })),
+        // ponytail: fotos reales donde existen (apps/web/public/Products); el resto, placeholders MOCK de picsum.
+        // Las fotos definitivas se suben a R2 desde el admin.
+        create: (REAL_PHOTOS[p.model] ?? [0, 1, 2].map((n) => ({ key: `https://picsum.photos/seed/${skuBase}-${n}/1600/2000`, width: 1600, height: 2000 }))).map(
+          (img, sort) => ({
+            r2Key: img.key,
+            altEs: `${nameEs}, vista ${sort + 1}`,
+            altEn: `${nameEn}, view ${sort + 1}`,
+            width: img.width,
+            height: img.height,
+            sort,
+          }),
+        ),
       },
     },
   });

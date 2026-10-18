@@ -43,8 +43,8 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
 
-      - name: Migraciones
-        run: pnpm --filter api exec prisma migrate deploy
+      - name: Migraciones y catálogo de ejemplo (lo usan los e2e)
+        run: pnpm --filter api exec prisma migrate deploy && pnpm --filter api db:seed catalog
       - name: Tests
         run: pnpm test && pnpm --filter api test:e2e
 
