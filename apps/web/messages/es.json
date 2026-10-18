@@ -14,7 +14,7 @@
     "home": "Inicio",
     "series": "Series",
     "seeAll": "Ver todo",
-    "otherLocale": "English"
+    "shippingNote": "Envíos a todo el Perú"
   },
   "Footer": {
     "shop": "Tienda",
@@ -27,18 +27,17 @@
   },
   "Home": {
     "heroTitle": "Hecho para la altura",
-    "heroCta": "Ver lo nuevo",
     "categories": "Categorías",
     "newArrivals": "Recién llegado",
     "seeAll": "Ver todo",
-    "editorialTitle": "Serie Wari",
-    "editorialData": "Probado a 5 200 m · -15 °C · 420 g",
-    "editorialCta": "Ver la serie",
     "newsletterTitle": "Novedades de la montaña, sin ruido",
     "newsletterLabel": "Correo electrónico",
     "newsletterCta": "Suscribirme",
     "newsletterOk": "Listo. Te escribiremos cuando haya algo que valga la pena.",
-    "newsletterError": "Revisa el correo e inténtalo otra vez."
+    "newsletterError": "Revisa el correo e inténtalo otra vez.",
+    "heroData": "6 384 m · 13°47′S 71°13′O · Cusco",
+    "seriesTitle": "Cinco series, un apu",
+    "seriesIntro": "Cada línea lleva el nombre de una cultura preinca y su propio parche, tejido en la manga."
   },
   "Listing": {
     "count": "{count, plural, one {# prenda} other {# prendas}}",
@@ -62,7 +61,9 @@
     "series": "Serie {name}",
     "searchTitle": "Resultados para “{q}”",
     "searchEmptyTitle": "Buscar",
-    "searchPrompt": "Escribe el nombre de una prenda o un dato técnico, como “merino” o “pluma”."
+    "searchPrompt": "Escribe el nombre de una prenda o un dato técnico, como “merino” o “pluma”.",
+    "emptyTitle": "Nada por aquí con estos filtros",
+    "seriesCode": "6384 · {code}"
   },
   "Product": {
     "new": "Nuevo",

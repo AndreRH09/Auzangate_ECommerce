@@ -24,6 +24,38 @@
 
   --spacing-header: 64px;
   --spacing-cta: 48px;
+
+  /* movimiento: entrar rápido y asentarse suave; salir acelerando; presionar casi instantáneo */
+  --ease-fluid: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-press: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Botones: un primario (granito) y un secundario (contorno) por vista. Responden al presionar. */
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--spacing-cta);
+  padding-inline: 24px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition:
+    background-color 150ms var(--ease-press),
+    color 150ms var(--ease-press),
+    scale 120ms var(--ease-press);
+  &:active {
+    scale: 0.98;
+  }
+}
+
+/* Activos de marca (SVG de una tinta) tintados con currentColor: blanco sobre plomo o plomo sobre blanco
+   desde el mismo archivo (manual de marca §2). La URL llega por --mark. */
+@utility brand-mark {
+  display: inline-block;
+  background-color: currentColor;
+  mask: var(--mark) center / contain no-repeat;
 }
 
 /* Solo datos: precio, tallas, SKU, conteos, ficha técnica, breadcrumb */
@@ -74,7 +106,86 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-granito);
+    outline: 2px solid currentColor;
     outline-offset: 2px;
   }
+
+  /* permite animar hacia height:auto (acordeones) */
+  :root {
+    interpolate-size: allow-keywords;
+  }
+
+  /* Paneles popover (menú, filtros): entran desde --from y salen hacia ahí, nunca aparecen de golpe.
+     Navegadores sin @starting-style simplemente los muestran sin animación. */
+  [popover] {
+    opacity: 0;
+    translate: var(--from, 0 -12px);
+    transition:
+      opacity 250ms var(--ease-exit),
+      translate 250ms var(--ease-exit),
+      overlay 250ms allow-discrete,
+      display 250ms allow-discrete;
+  }
+  [popover]:popover-open {
+    opacity: 1;
+    translate: 0 0;
+    transition-duration: 400ms;
+    transition-timing-function: var(--ease-fluid);
+  }
+  @starting-style {
+    [popover]:popover-open {
+      opacity: 0;
+      translate: var(--from, 0 -12px);
+    }
+  }
+  [popover]::backdrop {
+    background: rgb(38 37 39 / 0);
+    transition:
+      background-color 300ms var(--ease-fluid),
+      overlay 300ms allow-discrete,
+      display 300ms allow-discrete;
+  }
+  [popover]:popover-open::backdrop {
+    background: rgb(38 37 39 / 0.4);
+  }
+  @starting-style {
+    [popover]:popover-open::backdrop {
+      background: rgb(38 37 39 / 0);
+    }
+  }
+
+  /* Acordeones <details>: se despliegan en vez de saltar */
+  details::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      block-size 350ms var(--ease-fluid),
+      content-visibility 350ms allow-discrete;
+  }
+  details[open]::details-content {
+    block-size: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after,
+    ::backdrop,
+    ::details-content {
+      transition-duration: 0s !important;
+      animation: none !important;
+    }
+  }
+}
+
+/* Easter egg: el parche del footer recorre las 5 series al pasar el mouse */
+@keyframes series-cycle {
+  0% { --mark: url(/brand/parche-serie-caral.svg); }
+  20% { --mark: url(/brand/parche-serie-wari.svg); }
+  40% { --mark: url(/brand/parche-serie-sican.svg); }
+  60% { --mark: url(/brand/parche-serie-vicus.svg); }
+  80%, 100% { --mark: url(/brand/parche-serie-nasca.svg); }
+}
+.series-cycle:hover {
+  animation: series-cycle 2s steps(1) infinite;
 }

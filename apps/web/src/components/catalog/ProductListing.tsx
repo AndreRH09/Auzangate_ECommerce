@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { getProducts } from "@/lib/api";
+import { BrandMark } from "../ui/BrandMark";
 import { FILTER_DRAWER_ID, FilterDrawer } from "./FilterDrawer";
 import { Pagination } from "./Pagination";
 import { ProductGrid } from "./ProductGrid";
@@ -22,6 +23,7 @@ export async function ProductListing({
   params,
   breadcrumb,
   title,
+  intro,
 }: {
   locale: Locale;
   path: string;
@@ -29,6 +31,8 @@ export async function ProductListing({
   params: ListingParams;
   breadcrumb?: ReactNode;
   title: string;
+  /** bloque a la derecha del título (p. ej. parche y descripción de la serie) */
+  intro?: ReactNode;
 }) {
   const t = await getTranslations("Listing");
   // la URL es input del usuario: lo que no calce se ignora (la API respondería 400 y la página 500)
@@ -53,26 +57,37 @@ export async function ProductListing({
     return `${path}${qs.size ? `?${qs}` : ""}`;
   };
   const offset = Number(cursor) || 0;
+  const active = [size, color, min, max].filter(Boolean).length + (sort && sort !== "new" ? 1 : 0);
+  const clearHref = href({ sort: undefined, size: undefined, color: undefined, min: undefined, max: undefined, cursor: undefined });
 
   return (
     <main className="mx-auto max-w-[1600px] px-4 pt-6 md:px-8">
       {breadcrumb}
-      <h1 className="section-title mt-4">{title}</h1>
+      <div className="mt-6 grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
+        <h1 className="display text-[clamp(40px,6vw,96px)]">{title}</h1>
+        {intro}
+      </div>
 
-      <div className="mt-6 mb-4 flex items-center justify-between border-y border-linea py-2">
+      <div className="sticky top-14 z-20 mt-8 mb-4 flex items-center justify-between border-y border-linea bg-glaciar/90 py-1 backdrop-blur-md md:top-header">
         <p className="data uppercase" aria-live="polite">{t("count", { count: list.total })}</p>
-        <button popoverTarget={FILTER_DRAWER_ID} className="data flex h-11 items-center gap-2 uppercase">
+        <button popoverTarget={FILTER_DRAWER_ID} className="data group flex h-11 items-center gap-2 uppercase">
           {t("filter")}
-          <SlidersHorizontal size={16} aria-hidden />
+          {active > 0 && <span className="grid size-5 place-items-center rounded-sm bg-granito text-nieve">{active}</span>}
+          <SlidersHorizontal size={16} aria-hidden className="transition-transform duration-200 ease-(--ease-fluid) group-hover:rotate-90" />
         </button>
       </div>
 
       {list.items.length ? (
         <ProductGrid products={list.items} />
       ) : (
-        <div className="py-24 text-center">
-          <p>{t("empty")}</p>
-          <Link href="/" className="mt-4 inline-block underline underline-offset-4">{t("emptyCta")}</Link>
+        <div className="flex flex-col items-center py-24 text-center">
+          <BrandMark asset="isotipo" className="h-16 text-linea" />
+          <p className="mt-6 text-lg font-semibold">{t("emptyTitle")}</p>
+          <p className="mt-1 text-pizarra">{t("empty")}</p>
+          <div className="mt-8 flex gap-2">
+            {active > 0 && <Link href={clearHref} className="btn border border-granito">{t("clear")}</Link>}
+            <Link href="/buscar?sort=new" className="btn bg-granito text-nieve hover:bg-pizarra">{t("emptyCta")}</Link>
+          </div>
         </div>
       )}
 
@@ -86,7 +101,7 @@ export async function ProductListing({
         q={base.q}
         facets={list.facets}
         current={{ sort, size, color, min, max }}
-        clearHref={href({ sort: undefined, size: undefined, color: undefined, min: undefined, max: undefined, cursor: undefined })}
+        clearHref={clearHref}
       />
     </main>
   );

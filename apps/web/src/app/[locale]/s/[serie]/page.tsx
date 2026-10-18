@@ -4,6 +4,7 @@ import { ProductListing, type ListingParams } from "@/components/catalog/Product
 import type { Locale } from "@/i18n/routing";
 import { getSeries } from "@/lib/api";
 import { Breadcrumb } from "@/components/seo/Breadcrumb";
+import { BrandMark, type BrandAsset } from "@/components/ui/BrandMark";
 import { pageMeta } from "@/lib/seo";
 
 async function find(locale: Locale, slug: string) {
@@ -36,6 +37,12 @@ export default async function SeriesPage({ params, searchParams }: PageProps<"/[
       base={{ series: s.slug }}
       params={(await searchParams) as ListingParams}
       title={t("series", { name: s.name })}
+      intro={
+        <div className="flex items-center gap-6 md:max-w-md">
+          <BrandMark asset={`parche-serie-${s.code.toLowerCase()}` as BrandAsset} label={t("seriesCode", { code: s.name.toUpperCase() })} className="w-24 shrink-0" />
+          <p className="text-pizarra">{s.description}</p>
+        </div>
+      }
       breadcrumb={
         <Breadcrumb
           locale={locale}

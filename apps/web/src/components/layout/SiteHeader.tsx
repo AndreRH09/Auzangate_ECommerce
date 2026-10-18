@@ -2,6 +2,7 @@ import { Handbag, Heart, List, MagnifyingGlass, User } from "@phosphor-icons/rea
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
+import { BrandMark } from "../ui/BrandMark";
 import { MainMenu } from "./MainMenu";
 
 const icon = "size-11 grid place-items-center"; // zona táctil 44 px
@@ -31,10 +32,10 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
           </form>
         </div>
 
-        <Link href="/" aria-label="AUZANGATE" className="flex h-11 items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element -- SVG de marca */}
-          <img src="/brand/wordmark.svg" alt="" width={180} height={22} className="hidden h-[22px] w-auto md:block" />
-          <span className="display text-xl md:hidden">Auzan</span>
+        {/* manual de marca §5: lockup horizontal en desktop, monograma en mobile */}
+        <Link href="/" aria-label="AUZANGATE" className="flex h-11 items-center transition-opacity duration-150 hover:opacity-80">
+          <BrandMark asset="lockup-horizontal" className="hidden h-9 md:block" />
+          <BrandMark asset="isotipo" className="h-10 md:hidden" />
         </Link>
 
         <nav aria-label={t("account")} className="flex items-center justify-end">

@@ -5,6 +5,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { TopBar } from "@/components/layout/TopBar";
 import { routing } from "@/i18n/routing";
 import { SITE_URL } from "@/lib/format";
 import "../globals.css";
@@ -51,6 +52,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
           <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-nieve focus:p-3">
             {locale === "es" ? "Saltar al contenido" : "Skip to content"}
           </a>
+          <TopBar />
           <SiteHeader locale={locale} />
           <div id="main" className="flex-1">{children}</div>
           <SiteFooter locale={locale} />

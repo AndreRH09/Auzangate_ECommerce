@@ -28,7 +28,7 @@ export async function FilterDrawer({
   return (
     <PopoverPanel
       id={FILTER_DRAWER_ID}
-      className="ml-auto h-dvh max-h-none w-full max-w-md overflow-y-auto border-0 border-l border-linea bg-glaciar p-0 text-granito"
+      className="ml-auto h-dvh max-h-none w-full max-w-md overflow-y-auto border-0 border-l border-linea bg-glaciar p-0 text-granito [--from:100%_0]"
     >
       <form action={action} className="flex min-h-full flex-col">
         {q && <input type="hidden" name="q" value={q} />}
@@ -96,10 +96,10 @@ export async function FilterDrawer({
         </div>
 
         <div className="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-linea bg-glaciar p-4">
-          <Link href={clearHref} className="flex h-cta items-center justify-center rounded-md border border-granito font-semibold">
+          <Link href={clearHref} className="btn border border-granito">
             {t("clear")}
           </Link>
-          <button className="h-cta rounded-md bg-granito font-semibold text-nieve">{t("apply")}</button>
+          <button className="btn bg-granito text-nieve hover:bg-pizarra">{t("apply")}</button>
         </div>
       </form>
     </PopoverPanel>

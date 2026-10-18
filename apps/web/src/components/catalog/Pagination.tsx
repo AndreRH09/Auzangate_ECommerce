@@ -7,16 +7,8 @@ export async function Pagination({ prevHref, nextHref }: { prevHref: string | nu
   const t = await getTranslations("Listing");
   return (
     <nav className="mt-12 flex justify-center gap-2" aria-label="pagination">
-      {prevHref && (
-        <Link href={prevHref} className="flex h-cta items-center rounded-md border border-granito px-6 font-semibold">
-          {t("prev")}
-        </Link>
-      )}
-      {nextHref && (
-        <Link href={nextHref} className="flex h-cta items-center rounded-md bg-granito px-6 font-semibold text-nieve">
-          {t("next")}
-        </Link>
-      )}
+      {prevHref && <Link href={prevHref} className="btn border border-granito">{t("prev")}</Link>}
+      {nextHref && <Link href={nextHref} className="btn bg-granito text-nieve hover:bg-pizarra">{t("next")}</Link>}
     </nav>
   );
 }

@@ -24,14 +24,14 @@ export async function MainMenu({ locale }: { locale: Locale }) {
   return (
     <PopoverPanel
       id="menu"
-      className="m-0 h-dvh max-h-none w-full max-w-none overflow-y-auto border-0 bg-glaciar p-0 text-granito md:h-auto md:border-b md:border-linea"
+      className="m-0 h-dvh max-h-none w-full max-w-none overflow-y-auto border-0 bg-glaciar p-0 text-granito [--from:0_-16px] md:h-auto md:border-b md:border-linea"
     >
       <div className="flex h-14 items-center justify-between border-b border-linea px-2 md:h-header md:px-6">
         <button popoverTarget="menu" popoverTargetAction="hide" className="flex h-11 items-center gap-2 px-2 font-semibold">
           <X size={20} aria-hidden />
           {t("close")}
         </button>
-        <LanguageSwitcher label={t("otherLocale")} />
+        <LanguageSwitcher className="pr-2" />
       </div>
 
       {/* desktop: mega menú */}
