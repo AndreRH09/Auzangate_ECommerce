@@ -43,7 +43,7 @@ export class CatalogService {
   }
 
   private image(img: ImageRow, locale: Locale) {
-    return { url: this.imageUrl(img.r2Key), alt: locale === 'es' ? img.altEs : img.altEn, width: img.width, height: img.height };
+    return { url: this.imageUrl(img.r2Key), alt: locale === 'es' ? img.altEs : img.altEn, width: img.width, height: img.height, colorHex: img.colorHex };
   }
 
   private card(p: CardRow, locale: Locale) {

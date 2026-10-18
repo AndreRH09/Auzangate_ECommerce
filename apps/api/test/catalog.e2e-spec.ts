@@ -5,7 +5,7 @@ import { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
 import { setupApp } from '../src/setup.js';
 
-// Requiere el catálogo del seed (pnpm db:seed catalog): 20 productos, 1 en borrador (Pantalón AV02).
+// Requiere el catálogo del seed (pnpm db:seed catalog): 22 productos, 1 en borrador (Pantalón AV02).
 describe('Catálogo (e2e)', () => {
   let app: INestApplication<App>;
   const get = (url: string) => request(app.getHttpServer()).get(url);
@@ -27,7 +27,7 @@ describe('Catálogo (e2e)', () => {
 
   it('listado: solo publicados, paginado por cursor', async () => {
     const all = await get('/v1/products?locale=es').expect(200);
-    expect(all.body.total).toBe(19);
+    expect(all.body.total).toBe(21);
 
     const page = await get('/v1/products?locale=es&limit=5').expect(200);
     expect(page.body.items).toHaveLength(5);
@@ -38,14 +38,14 @@ describe('Catálogo (e2e)', () => {
 
   it('categoría padre incluye hijas; orden por precio', async () => {
     const { body } = await get('/v1/products?locale=es&category=hombre&sort=price_asc').expect(200);
-    expect(body.total).toBe(7);
+    expect(body.total).toBe(8);
     const prices = body.items.map((p: { priceCents: number }) => p.priceCents);
     expect(prices).toEqual([...prices].sort((a, b) => a - b));
   });
 
   it('filtros de serie, talla y búsqueda', async () => {
     expect((await get('/v1/products?locale=es&series=wari').expect(200)).body.total).toBe(5);
-    expect((await get('/v1/products?locale=es&size=XS').expect(200)).body.total).toBe(8);
+    expect((await get('/v1/products?locale=es&size=XS').expect(200)).body.total).toBe(9);
     // "aw01" encuentra la versión de hombre (AW01) y la de mujer (FAW01)
     expect((await get('/v1/products?locale=en&q=aw01').expect(200)).body.total).toBe(2);
   });
@@ -55,7 +55,7 @@ describe('Catálogo (e2e)', () => {
     expect(body.code).toBe('FAW01');
     expect(body.alternates.en).toBe('jacket-faw01');
     expect(body.category.parent.slug).toBe('mujer');
-    expect(body.variants[0].sku).toMatch(/^FAW01-[A-Z]{3}-/);
+    expect(body.variants[0].sku).toMatch(/^FAW01-[A-Z]-/);
     await get('/v1/products/pantalon-av02?locale=es').expect(404);
   });
 
@@ -66,7 +66,7 @@ describe('Catálogo (e2e)', () => {
 
   it('feed del sitemap', async () => {
     const { body } = await get('/v1/catalog/sitemap').expect(200);
-    expect(body.products).toHaveLength(19);
+    expect(body.products).toHaveLength(21);
     expect(body.products[0].slugs).toHaveProperty('en');
   });
 });

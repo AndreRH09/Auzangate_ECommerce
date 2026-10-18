@@ -1,4 +1,4 @@
-// Catálogo: series, categorías y 20 productos ES/EN.
+// Catálogo: series, categorías y 22 productos ES/EN.
 // Los precios, specs y stocks son DATOS DE EJEMPLO, no fichas reales.
 import { ProductStatus, type Locale } from '../../src/generated/prisma/client.js';
 import { prisma } from './client.js';
@@ -30,17 +30,19 @@ const CHILDREN = [
 
 type ChildKey = (typeof CHILDREN)[number]['key'];
 
+// Código de color: 1 letra, usada en el SKU (AC04-C-M) y en la carpeta de fotos (products/AC04/C/front.png).
+// Nunca "F": ese prefijo marca la versión de mujer del código de producto.
 const COLORS = [
-  { hex: '#262527', name: { es: 'Granito', en: 'Granite' } },
-  { hex: '#8A8D8F', name: { es: 'Roca', en: 'Rock' } },
-  { hex: '#4B5D44', name: { es: 'Musgo', en: 'Moss' } },
-  { hex: '#9C6B4E', name: { es: 'Arcilla', en: 'Clay' } },
+  { code: 'C', hex: '#242428', name: { es: 'Carbón', en: 'Charcoal' } },
+  { code: 'R', hex: '#8A8D8F', name: { es: 'Roca', en: 'Rock' } },
+  { code: 'V', hex: '#4B5D44', name: { es: 'Musgo', en: 'Moss' } },
+  { code: 'A', hex: '#9C6B4E', name: { es: 'Arcilla', en: 'Clay' } },
 ];
 
 // Convención de nombres: "{Tipo} {código}", sin nombre de modelo ni adjetivos.
 // Código = A (Auzangate) + inicial de la serie (C/W/S/V/N) + número de 2 dígitos por serie.
 // La versión de mujer antepone F al mismo código: AW01 (hombre) / FAW01 (mujer).
-// Fotos: products/{código}/{vista}.{ext}, mínimo 3 vistas: front, rear, side.
+// Fotos: products/{código}/{color}/{vista}.{ext}, mínimo 3 vistas por color: front, rear, side.
 
 // [código, tipo ES, tipo EN, categoría hija, serie, precio S/, subtítulo ES, subtítulo EN, specs]
 type Line = [string, string, string, ChildKey, string, number, string, string, Record<string, string>];
@@ -54,6 +56,7 @@ const APPAREL: Line[] = [
   ['AS01', 'Chaleco', 'Vest', 'capas', 'SICAN', 339, 'Pluma 800 · 210 g', '800 down · 210 g', { peso: '210 g', relleno: 'Pluma 800 FP' }],
   ['AN02', 'Polo', 'Tee', 'capas', 'NASCA', 119, 'Merino 150 g/m²', 'Merino 150 g/m²', { peso: '140 g', gramaje: '150 g/m²', fibra: 'Merino 87 %' }],
   ['AV02', 'Pantalón', 'Pants', 'pantalones', 'VICUS', 279, 'Stretch 4 vías · UPF 50', '4-way stretch · UPF 50', { peso: '340 g', protección: 'UPF 50' }],
+  ['AC04', 'Polo', 'Tee', 'capas', 'CARAL', 99, 'Algodón 180 g/m²', 'Cotton 180 g/m²', { peso: '180 g', fibra: 'Algodón 100 %' }],
 ];
 
 // [código, tipo ES, tipo EN, serie, precio S/, subtítulo ES, subtítulo EN, specs]
@@ -65,14 +68,20 @@ const ACCESSORIES: [string, string, string, string, number, string, string, Reco
 ];
 
 // Fotos reales servidas por la web desde public/products (rutas que empiezan con "/" pasan tal cual).
-const REAL_PHOTOS: Record<string, { key: string; width: number; height: number }[]> = {
-  AC01: [
-    { key: '/products/AC01/front.png', width: 1341, height: 988 },
-    { key: '/products/AC01/rear.png', width: 1233, height: 934 },
-    { key: '/products/AC01/side.png', width: 1090, height: 829 },
-  ],
-};
+// colorHex null = la foto sirve para todos los colores.
+type Photo = { key: string; width: number; height: number; colorHex: string | null };
 const VIEWS = ['front', 'rear', 'side'] as const;
+const REAL_PHOTOS: Record<string, Photo[]> = {
+  // ponytail: el gorro de las fotos no es de ningún color de la paleta; compartidas hasta tener fotos por color
+  AC01: [
+    { key: '/products/AC01/front.png', width: 1341, height: 988, colorHex: null },
+    { key: '/products/AC01/rear.png', width: 1233, height: 934, colorHex: null },
+    { key: '/products/AC01/side.png', width: 1090, height: 829, colorHex: null },
+  ],
+  AC04: COLORS.filter((c) => 'CRV'.includes(c.code)).flatMap((c) =>
+    VIEWS.map((v) => ({ key: `/products/AC04/${c.code}/${v}.png`, width: 1024, height: 1024, colorHex: c.hex })), // cuadradas
+  ),
+};
 
 const slugify =(s: string) =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -134,7 +143,9 @@ type ProductInput = {
 async function createProduct(i: number, p: ProductInput) {
   const nameEs = `${p.typeEs} ${p.code}`;
   const nameEn = `${p.typeEn} ${p.code}`;
-  const colors = COLORS.slice(0, 2 + (i % 3));
+  // con fotos por color, solo los colores fotografiados; si no, 2-4 colores de ejemplo
+  const photoHexes = new Set(REAL_PHOTOS[p.code]?.map((img) => img.colorHex).filter(Boolean));
+  const colors = photoHexes.size ? COLORS.filter((c) => photoHexes.has(c.hex)) : COLORS.slice(0, 2 + (i % 3));
   const techSpecs = { ...p.specs, serie: p.seriesCode };
 
   await prisma.product.create({
@@ -153,7 +164,7 @@ async function createProduct(i: number, p: ProductInput) {
       variants: {
         create: colors.flatMap((c, ci) =>
           p.sizes.map((size, si) => ({
-            sku: `${p.code}-${c.name.es.slice(0, 3).toUpperCase()}-${size}`, // AW01-GRA-M
+            sku: `${p.code}-${c.code}-${size}`, // AW01-C-M
             colorHex: c.hex,
             colorName: c.name,
             size,
@@ -163,18 +174,20 @@ async function createProduct(i: number, p: ProductInput) {
         ),
       },
       images: {
-        // ponytail: fotos reales donde existen (apps/web/public/products); el resto, placeholders MOCK de picsum.
-        // Las fotos definitivas se suben a R2 desde el admin.
-        create: (REAL_PHOTOS[p.code] ?? VIEWS.map((v) => ({ key: `https://picsum.photos/seed/${p.code}-${v}/1600/2000`, width: 1600, height: 2000 }))).map(
-          (img, sort) => ({
-            r2Key: img.key,
-            altEs: `${nameEs}, vista ${['frontal', 'posterior', 'lateral'][sort] ?? sort + 1}`,
-            altEn: `${nameEn}, ${VIEWS[sort] ?? sort + 1} view`,
-            width: img.width,
-            height: img.height,
-            sort,
-          }),
-        ),
+        // ponytail: fotos reales donde existen (apps/web/public/products); el resto, placeholders MOCK de picsum
+        // (3 por color, para que la galería cambie al elegir color). Las definitivas se suben a R2 desde el admin.
+        create: (
+          REAL_PHOTOS[p.code] ??
+          colors.flatMap((c): Photo[] => VIEWS.map((v) => ({ key: `https://picsum.photos/seed/${p.code}-${c.code}-${v}/1600/2000`, width: 1600, height: 2000, colorHex: c.hex })))
+        ).map((img, sort) => ({
+          r2Key: img.key,
+          colorHex: img.colorHex,
+          altEs: `${nameEs}, vista ${['frontal', 'posterior', 'lateral'][sort % 3]}`,
+          altEn: `${nameEn}, ${VIEWS[sort % 3]} view`,
+          width: img.width,
+          height: img.height,
+          sort,
+        })),
       },
     },
   });

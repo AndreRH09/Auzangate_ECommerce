@@ -48,7 +48,7 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
 
         {/* cierre: lockup horizontal a escala de firma + créditos e idioma */}
         <div className="flex flex-wrap items-end justify-between gap-6 py-8">
-          <BrandMark asset="lockup-horizontal" label="AUZANGATE" className="block w-56 md:w-72" />
+          <BrandMark asset="lockup-horizontal" label="AUZANGATE" className="block w-30 md:w-50" />
           <div className="data flex flex-wrap items-center gap-6 opacity-80">
             <p>© {new Date().getFullYear()} AUZANGATE · {t("rights")}</p>
             <LanguageSwitcher />

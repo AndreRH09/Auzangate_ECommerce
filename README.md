@@ -30,7 +30,12 @@ Monorepo con pnpm workspaces + Turborepo.
 - [x] Web: Next 16 con design tokens, fuentes y assets de marca
 - [x] Web: i18n `es` / `en` con prefijo en la URL (`/es`, `/en`); `/` redirige a `/es`
 - [x] Web: build y despliegue a Cloudflare Workers con OpenNext + Wrangler
-- [ ] Web: catálogo (F1)
+- [x] CI: typecheck, lint, e2e, build de API y Worker, imágenes Docker
+- [x] API: catálogo (categorías, series, productos con filtros/búsqueda, sitemap) y newsletter
+- [x] Web: home, listados (categoría, serie, búsqueda), ficha de producto con galería por color, SEO (sitemap, robots, JSON-LD)
+- [ ] Auth del admin, admin de catálogo, imágenes en R2, revalidación, deploy (resto de F1)
+
+Detalle, decisiones y riesgos al escalar: [docs/PLAN-DE-TRABAJO.md](docs/PLAN-DE-TRABAJO.md).
 
 ## Requisitos
 
@@ -45,7 +50,7 @@ pnpm install
 Copy-Item .env.example .env     # luego edita las contraseñas
 pnpm up                         # MySQL + Adminer en Docker
 pnpm db:migrate                 # crea las tablas
-pnpm db:seed                    # admin + series + zonas de envío + 20 productos de ejemplo
+pnpm db:seed                    # admin + series + zonas de envío + 22 productos de ejemplo
 pnpm api                        # API en http://localhost:3000
 pnpm web                        # tienda en http://localhost:3001 (otra terminal)
 ```
@@ -68,6 +73,7 @@ Si el puerto 3306 está ocupado (por ejemplo, por un MySQL instalado en Windows)
 | `docker build -f apps/web/Dockerfile.preview -t auzangate-web-preview .`<br>`docker run --rm -p 8787:8787 auzangate-web-preview` | Mismo preview desde Windows, dentro de Linux → http://localhost:8787 |
 | `pnpm --filter web deploy` | Build y despliegue a Cloudflare (requiere `wrangler login`) |
 | `pnpm lint` / `pnpm typecheck` / `pnpm test` | Chequeos de todo el monorepo |
+| `pnpm --filter api test:e2e` | Tests e2e de la API contra la BD local (requiere `pnpm db:seed catalog`) |
 | `pnpm db:studio` | Prisma Studio para ver y editar datos |
 | `pnpm db:seed [users] [config] [catalog]` | Semillas de desarrollo; sin argumentos corre todas. Re-ejecutables |
 
@@ -109,6 +115,15 @@ docker compose -p auzangate-prod -f docker-compose.yml -f docker-compose.prod.ym
 
 En producción MySQL no publica puertos: solo la API (3000) es accesible. `-p auzangate-prod` usa otro nombre de proyecto, así no pisa los contenedores ni el volumen de dev. Para apagarlo: `docker compose -p auzangate-prod down`.
 
+## Catálogo: códigos y fotos
+
+- Código de producto: `A` + inicial de la serie (`C`/`W`/`S`/`V`/`N`) + número de 2 dígitos. La versión de mujer antepone `F`: `AW01` / `FAW01`.
+- Nombre: `{Tipo} {código}` (por ejemplo, `Casaca FAW01`), sin nombre de modelo.
+- SKU: `{código}-{color}-{talla}`, con color de 1 letra (`C` Carbón, `R` Roca, `V` Musgo, `A` Arcilla; nunca `F`). Ejemplo: `AC04-C-M`.
+- Fotos (temporal, hasta R2): `apps/web/public/products/{código}/{color}/{front,rear,side}.png` y registradas en `REAL_PHOTOS` de `apps/api/prisma/seeds/catalog.ts`. Una foto sin color (`colorHex` null) se muestra con todos los colores.
+
+Si cambias productos del seed, actualiza los conteos de `apps/api/test/catalog.e2e-spec.ts`.
+
 ## Web: idiomas
 
 Los textos viven en `apps/web/messages/{es,en}.json` y la config en `apps/web/src/i18n/`. Para enlaces internos usa `Link` de `@/i18n/navigation` (agrega el prefijo de idioma), no `next/link`. No hay middleware: OpenNext no lo soporta en runtime Node, por eso `/` → `/es` es un redirect estático en `next.config.ts`.
@@ -116,5 +131,5 @@ Los textos viven en `apps/web/messages/{es,en}.json` y la config en `apps/web/sr
 ## Flujo de git
 
 - `main` es lo que se despliega. No se trabaja directo sobre ella.
-- Una rama por fase o funcionalidad (`f0/base`, `f1/catalogo`…), con commits pequeños en formato Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `ci:`).
+- Una rama por fase o funcionalidad (`f0/base`, `f1/catalog`…), con commits pequeños en formato Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `ci:`).
 - Al terminar, se abre un Pull Request a `main` y se fusiona con la CI en verde.

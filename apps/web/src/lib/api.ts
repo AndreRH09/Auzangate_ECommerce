@@ -4,7 +4,7 @@ import type { Locale } from "@/i18n/routing";
 // ponytail: tipos escritos a mano según las respuestas de apps/api/src/catalog. Generarlos desde
 // openapi.json (packages/api-types) cuando la API tenga DTOs de respuesta y más de un consumidor.
 export type Alternates = Record<Locale, string>;
-export type Image = { url: string; alt: string; width: number; height: number };
+export type Image = { url: string; alt: string; width: number; height: number; colorHex: string | null }; // null = todos los colores
 export type Color = { hex: string; name: string };
 
 export type Card = {

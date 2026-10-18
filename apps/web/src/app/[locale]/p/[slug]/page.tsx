@@ -1,6 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { ProductBuyBox } from "@/components/product/ProductBuyBox";
-import { ProductGallery } from "@/components/product/ProductGallery";
+import { ProductHero } from "@/components/product/ProductHero";
 import { ProductSpecsAccordion } from "@/components/product/ProductSpecsAccordion";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 import { Breadcrumb } from "@/components/seo/Breadcrumb";
@@ -71,18 +70,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/p/[sl
         />
       </div>
 
-      {/* buy-box flotante encima de la 2ª foto en desktop; debajo de la galería en mobile */}
-      <div className="relative mt-4">
-        <ProductGallery images={p.images} label={p.name} />
-        <div className="md:absolute md:top-6 md:right-8 md:max-h-[calc(100svh-112px)] md:w-[min(564px,39vw)] md:overflow-y-auto md:rounded-panel md:bg-glaciar/90 md:backdrop-blur-md">
-          <ProductBuyBox
-            name={p.name}
-            subtitle={p.subtitle}
-            variants={p.variants}
-            seriesPatch={p.series && { src: `/brand/parche-serie-${p.series.code.toLowerCase()}.svg`, name: p.series.name }}
-          />
-        </div>
-      </div>
+      <ProductHero p={p} />
 
       <div className="mx-auto mt-16 max-w-[1600px] px-4 md:px-8">
         <ProductSpecsAccordion description={p.description} techSpecs={p.techSpecs} />

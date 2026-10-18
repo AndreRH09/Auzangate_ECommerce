@@ -15,15 +15,18 @@ export function ProductBuyBox({
   subtitle,
   variants,
   seriesPatch,
+  color,
+  onColorChange: setColor,
 }: {
   name: string;
   subtitle: string;
   variants: Product["variants"];
   seriesPatch: { src: string; name: string } | null;
+  color: string;
+  onColorChange: (hex: string) => void;
 }) {
   const t = useTranslations("Product");
   const colors = [...new Map(variants.map((v) => [v.colorHex, v])).values()];
-  const [color, setColor] = useState((variants.find((v) => v.stock > 0) ?? variants[0])!.colorHex);
   const [size, setSize] = useState<string | null>(null);
   const [message, setMessage] = useState(false);
   const sizesRef = useRef<HTMLFieldSetElement>(null);
