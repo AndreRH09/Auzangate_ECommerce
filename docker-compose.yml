@@ -1,0 +1,26 @@
+# Base compartida por dev y prod. No publica puertos: eso lo decide cada entorno.
+#   dev:  docker compose up -d                       (suma docker-compose.override.yml solo)
+#   prod: docker compose -p auzangate-prod -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production up -d --build
+#   (-p separa contenedores y volumen de los de dev)
+name: auzangate
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Define MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-auzangate}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      # -h 127.0.0.1 fuerza TCP: durante el init MySQL solo escucha por socket,
+      # así el contenedor no se marca "healthy" antes de tiempo
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+volumes:
+  mysql-data:

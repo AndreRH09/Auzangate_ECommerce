@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+/* Tokens del design system (auzangate-design-system.md §2). Solo modo claro: el glaciar es identidad. */
+/* ponytail: tokens aquí y no en packages/design-tokens; un solo consumidor (apps/web). */
+@theme inline {
+  /* color: ~90 % acromático; cochinilla solo para estados ("Nuevo", "Agotado", error), nunca fondo de CTA */
+  --color-glaciar: #f7f8f8;
+  --color-nieve: #ffffff;
+  --color-roca-clara: #e6e8e8;
+  --color-granito: #262527;
+  --color-pizarra: #606263;
+  --color-linea: #d9dbdb;
+  --color-cochinilla: #9e1b32;
+  --color-ichu: #e9e3d6;
+
+  /* tipografía: variables que inyecta next/font en layout.tsx */
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* forma: 2-8 px, sin pills ni sombras */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-panel: 8px;
+
+  --spacing-header: 64px;
+  --spacing-cta: 48px;
+}
+
+/* Solo datos: precio, tallas, SKU, conteos, ficha técnica, breadcrumb */
+@utility data {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Titulares y wordmark tipográfico: Archivo en ancho 125 */
+@utility display {
+  font-family: var(--font-sans);
+  font-stretch: 125%;
+  font-weight: 800;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+/* Estados: "NUEVO", "AGOTADO" */
+@utility label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@layer base {
+  body {
+    background: var(--color-glaciar);
+    color: var(--color-granito);
+    font-family: var(--font-sans);
+    font-size: 14px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-granito);
+    outline-offset: 2px;
+  }
+}

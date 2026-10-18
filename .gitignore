@@ -1,38 +1,31 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# dependencias (sin "/" inicial: aplica en cualquier carpeta del monorepo)
+node_modules
+.pnpm-store
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# builds
+dist
+.next
+out
+.open-next
+.wrangler
+.turbo
+coverage
+*.tsbuildinfo
+next-env.d.ts
+apps/api/src/generated
 
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
+# entorno: nunca se suben secretos
+.env
+.env.*
+!.env*.example
 
 # misc
 .DS_Store
 *.pem
+*.log
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
-.env
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
+# contexto local
 ClaudeContext/*
+.claude
+
+docs

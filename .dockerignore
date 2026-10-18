@@ -1,0 +1,15 @@
+# Lo que Docker NO copia al contexto de build: más rápido y sin secretos dentro de la imagen
+**/node_modules
+**/dist
+**/.next
+**/.open-next
+**/.turbo
+**/coverage
+apps/api/src/generated
+.git
+.env
+.env.*
+!.env*.example
+ClaudeContext
+docs
+*.md
