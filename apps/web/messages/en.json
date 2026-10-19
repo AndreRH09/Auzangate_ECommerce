@@ -140,6 +140,32 @@
       "UNISEX": "Unisex",
       "MEN": "Men",
       "WOMEN": "Women"
+    },
+    "viewInStore": "View in store",
+    "code": "Code",
+    "noSeries": "No series",
+    "name": "Name",
+    "slug": "Slug (URL)",
+    "slugAuto": "Generated from the name",
+    "subtitle": "Technical subtitle",
+    "description": "Description",
+    "techSpecs": "Tech specs",
+    "specKey": "Property",
+    "specValue": "Value",
+    "addSpec": "Add property",
+    "removeSpec": "Remove property",
+    "edit": "Edit",
+    "variantsImages": "{variants} variants · {images} images (edited in the next steps)",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved. The store already shows the change.",
+    "errors": {
+      "code_taken": "Another product already uses that code.",
+      "slug_taken": "Another product already uses that slug in the same language.",
+      "invalid_category": "The category or series does not exist.",
+      "need_variant_price": "Publishing needs at least one variant with a price.",
+      "need_image_alt": "Publishing needs at least one image with alt text in ES and EN.",
+      "invalid_tech_specs": "Invalid tech specs: up to 30 lines, keys up to 40 and values up to 200 characters."
     }
   }
 }

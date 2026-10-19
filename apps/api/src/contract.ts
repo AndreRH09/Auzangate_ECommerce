@@ -85,3 +85,28 @@ export type AdminProductRow = {
 };
 
 export type AdminProductList = { total: number; page: number; pageSize: number; items: AdminProductRow[] };
+
+export type ProductTranslationInput = {
+  name: string;
+  slug: string;
+  subtitle: string;
+  description: string;
+  techSpecs: Record<string, string>;
+};
+
+// Lo que el formulario edita (GET y cuerpo del PUT; en el PUT el slug puede ir vacío y se genera del nombre).
+export type AdminProductInput = {
+  code: string;
+  status: ProductStatus;
+  gender: Gender;
+  categoryId: string;
+  seriesId: string | null;
+  translations: Record<Locale, ProductTranslationInput>;
+};
+
+export type AdminProduct = AdminProductInput & { id: string; variants: number; images: number; updatedAt: string };
+
+export type AdminCatalogOptions = { categories: { id: string; name: string }[]; series: { id: string; name: string }[] };
+
+// Códigos de error de guardado (409/422); la web los traduce.
+export type AdminSaveError = 'code_taken' | 'slug_taken' | 'invalid_category' | 'need_variant_price' | 'need_image_alt' | 'invalid_tech_specs';

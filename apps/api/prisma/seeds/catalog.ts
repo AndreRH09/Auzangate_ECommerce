@@ -1,6 +1,7 @@
 // Catálogo: series, categorías y 13 productos ES/EN, todos unisex.
 // Los precios, specs y stocks son DATOS DE EJEMPLO, no fichas reales.
 import { ProductStatus, type Locale } from '../../src/generated/prisma/client.js';
+import { slugify } from '../../src/slugify.js';
 import { prisma } from './client.js';
 
 type T = Record<Locale, string>;
@@ -79,8 +80,6 @@ const REAL_PHOTOS: Record<string, Photo[]> = {
   ),
 };
 
-const slugify =(s: string) =>
-  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
 // Stock determinista (sin Math.random) para que cada reset dé lo mismo; algunos en 0 para ver "Agotado".
 const stockFor = (i: number) => [0, 2, 5, 8, 12, 3][i % 6]!;

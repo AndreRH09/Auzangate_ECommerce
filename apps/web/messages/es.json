@@ -140,6 +140,32 @@
       "UNISEX": "Unisex",
       "MEN": "Hombre",
       "WOMEN": "Mujer"
+    },
+    "viewInStore": "Ver en la tienda",
+    "code": "Código",
+    "noSeries": "Sin serie",
+    "name": "Nombre",
+    "slug": "Slug (URL)",
+    "slugAuto": "Se genera del nombre",
+    "subtitle": "Subtítulo técnico",
+    "description": "Descripción",
+    "techSpecs": "Ficha técnica",
+    "specKey": "Propiedad",
+    "specValue": "Valor",
+    "addSpec": "Agregar propiedad",
+    "removeSpec": "Quitar propiedad",
+    "edit": "Editar",
+    "variantsImages": "{variants} variantes · {images} imágenes (se editan en los próximos pasos)",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saved": "Guardado. La tienda ya muestra el cambio.",
+    "errors": {
+      "code_taken": "Ese código ya lo usa otro producto.",
+      "slug_taken": "Ese slug ya lo usa otro producto en el mismo idioma.",
+      "invalid_category": "La categoría o la serie no existe.",
+      "need_variant_price": "Para publicar falta al menos una variante con precio.",
+      "need_image_alt": "Para publicar falta al menos una imagen con texto alternativo en ES y EN.",
+      "invalid_tech_specs": "Ficha técnica inválida: máximo 30 líneas, clave hasta 40 y valor hasta 200 caracteres."
     }
   }
 }

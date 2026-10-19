@@ -1,13 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { toImageUrl } from '../catalog/catalog.service.js';
 import type { Env } from '../config/env.js';
-import type { AdminProductList } from '../contract.js';
-import type { Prisma } from '../generated/prisma/client.js';
+import type { AdminCatalogOptions, AdminProduct, AdminProductList, AdminSaveError, Locale, ProductTranslationInput } from '../contract.js';
+import { Prisma, ProductStatus } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import type { AdminProductsQuery } from './admin-catalog.dto.js';
+import { slugify } from '../slugify.js';
+import type { AdminProductsQuery, SaveProductDto } from './admin-catalog.dto.js';
 
 const PAGE_SIZE = 25;
+const LOCALES = ['es', 'en'] as const satisfies Locale[];
+
+// El cuerpo de los 409/422: { message: [códigos] }, igual que los 400 de validación.
+const fail = (Err: typeof ConflictException, ...codes: AdminSaveError[]) => new Err({ message: codes });
+
+// techSpecs llega como JSON libre: máx. 30 pares de texto corto.
+const validSpecs = (specs: Record<string, unknown>) =>
+  Object.keys(specs).length <= 30 &&
+  Object.entries(specs).every(([k, v]) => k.trim() && k.length <= 40 && typeof v === 'string' && v.length <= 200);
 
 @Injectable()
 export class AdminCatalogService {
@@ -69,5 +79,96 @@ export class AdminCatalogService {
         updatedAt: p.updatedAt.toISOString(),
       })),
     };
+  }
+
+  // Selects del formulario: categorías hijas como "Padre · Hija".
+  async options(locale: Locale): Promise<AdminCatalogOptions> {
+    const name = { where: { locale }, select: { name: true } };
+    const [categories, series] = await Promise.all([
+      this.prisma.category.findMany({ orderBy: [{ parentId: 'asc' }, { sort: 'asc' }], include: { translations: name, parent: { include: { translations: name } } } }),
+      this.prisma.series.findMany({ orderBy: { sort: 'asc' }, include: { translations: name } }),
+    ]);
+    return {
+      categories: categories.map((c) => ({
+        id: c.id,
+        name: [c.parent?.translations[0]?.name, c.translations[0]?.name].filter(Boolean).join(' · '),
+      })),
+      series: series.map((s) => ({ id: s.id, name: s.translations[0]?.name ?? s.code })),
+    };
+  }
+
+  async product(id: string): Promise<AdminProduct> {
+    const p = await this.prisma.product.findUnique({
+      where: { id },
+      include: { translations: true, _count: { select: { variants: true, images: true } } },
+    });
+    if (!p) throw new NotFoundException();
+    const empty: ProductTranslationInput = { name: '', slug: '', subtitle: '', description: '', techSpecs: {} };
+    const t = (locale: Locale) => {
+      const row = p.translations.find((r) => r.locale === locale);
+      return row ? { name: row.name, slug: row.slug, subtitle: row.subtitle, description: row.description, techSpecs: row.techSpecs as Record<string, string> } : empty;
+    };
+    return {
+      id: p.id,
+      code: p.code,
+      status: p.status,
+      gender: p.gender,
+      categoryId: p.categoryId,
+      seriesId: p.seriesId,
+      translations: { es: t('es'), en: t('en') },
+      variants: p._count.variants,
+      images: p._count.images,
+      updatedAt: p.updatedAt.toISOString(),
+    };
+  }
+
+  // RF-A02/A03/A08. Reemplaza los datos editables; variantes e imágenes no se tocan aquí.
+  async update(id: string, dto: SaveProductDto): Promise<AdminProduct> {
+    if (!(await this.prisma.product.count({ where: { id } }))) throw new NotFoundException();
+    if (LOCALES.some((l) => !validSpecs(dto.translations[l].techSpecs))) throw fail(BadRequestException, 'invalid_tech_specs');
+
+    // RF-A08: no se publica sin ≥ 1 variante con precio ni ≥ 1 imagen con alt en ambos idiomas
+    if (dto.status === ProductStatus.PUBLISHED) {
+      const [priced, withAlt] = await Promise.all([
+        this.prisma.productVariant.count({ where: { productId: id, priceCents: { gt: 0 } } }),
+        this.prisma.productImage.count({ where: { productId: id, altEs: { not: '' }, altEn: { not: '' } } }),
+      ]);
+      const missing: AdminSaveError[] = [];
+      if (!priced) missing.push('need_variant_price');
+      if (!withAlt) missing.push('need_image_alt');
+      if (missing.length) throw fail(UnprocessableEntityException, ...missing);
+    }
+
+    const translation = (locale: Locale) => {
+      const { name, slug, subtitle, description, techSpecs } = dto.translations[locale];
+      return { name: name.trim(), slug: slug || slugify(name), subtitle, description, techSpecs };
+    };
+    try {
+      await this.prisma.product.update({
+        where: { id },
+        data: {
+          code: dto.code,
+          status: dto.status,
+          gender: dto.gender,
+          categoryId: dto.categoryId,
+          seriesId: dto.seriesId ?? null,
+          translations: {
+            upsert: LOCALES.map((locale) => ({
+              where: { productId_locale: { productId: id, locale } },
+              create: { locale, ...translation(locale) },
+              update: translation(locale),
+            })),
+          },
+        },
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        // P2002 = único repetido (código o slug); P2003 = categoría/serie inexistente
+        if (e.code === 'P2002') throw fail(ConflictException, JSON.stringify(e.meta).includes('code') ? 'code_taken' : 'slug_taken');
+        if (e.code === 'P2003') throw fail(BadRequestException, 'invalid_category');
+      }
+      throw e;
+    }
+    return this.product(id);
   }
 }

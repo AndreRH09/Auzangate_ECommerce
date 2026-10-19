@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"; // solo servidor: importarlo desde un client component falla en el build
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { type Admin, API_URL } from "./api";
 
@@ -16,6 +16,16 @@ export async function getAdmin(): Promise<Admin | null> {
   return res?.ok ? ((await res.json()) as Admin) : null;
 }
 
+// 400/409/422 de la API: `messages` trae los códigos (AdminSaveError) o los textos de validación.
+export class AdminApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly messages: string[],
+  ) {
+    super(`API ${status}: ${messages.join(", ")}`);
+  }
+}
+
 // Llamadas a /v1/admin/* con el token de la cookie. Si la sesión venció, vuelve al login.
 export async function adminApi<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}/v1/admin${path}`, {
@@ -24,6 +34,10 @@ export async function adminApi<T>(path: string, init?: RequestInit): Promise<T> 
     cache: "no-store",
   });
   if (res.status === 401) redirect(`/${await getLocale()}/admin/login`);
-  if (!res.ok) throw new Error(`API ${res.status} en /admin${path}`);
+  if (res.status === 404) notFound();
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { message?: string | string[] };
+    throw new AdminApiError(res.status, [body.message ?? res.statusText].flat());
+  }
   return (await res.json()) as T;
 }

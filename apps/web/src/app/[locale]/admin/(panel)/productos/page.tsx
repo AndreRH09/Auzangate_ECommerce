@@ -1,3 +1,4 @@
+import { PencilSimple } from "@phosphor-icons/react/dist/ssr";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
@@ -79,6 +80,7 @@ export default async function AdminProducts({ params, searchParams }: PageProps<
               <th className="p-3 text-right font-normal">{t("stock")}</th>
               <th className="p-3 text-right font-normal">{t("priceFrom")}</th>
               <th className="p-3 font-normal">{t("updated")}</th>
+              <th className="p-3 font-normal"><span className="sr-only">{t("edit")}</span></th>
             </tr>
           </thead>
           <tbody>
@@ -93,7 +95,7 @@ export default async function AdminProducts({ params, searchParams }: PageProps<
                   )}
                 </td>
                 <td className="p-3">
-                  <span className="font-medium">{p.name}</span>
+                  <Link href={`/admin/productos/${p.id}`} className="font-medium hover:underline hover:underline-offset-4">{p.name}</Link>
                   <span className="data block text-xs text-pizarra">{p.code}</span>
                 </td>
                 <td className="p-3"><span className={`rounded-full px-2 py-0.5 text-xs ${badge[p.status]}`}>{t(`statusName.${p.status}`)}</span></td>
@@ -104,10 +106,15 @@ export default async function AdminProducts({ params, searchParams }: PageProps<
                 <td className={`data p-3 text-right ${p.stock === 0 ? "text-[#c4384a]" : ""}`}>{p.stock}</td>
                 <td className="data p-3 text-right">{p.priceFromCents === null ? "—" : formatPrice(p.priceFromCents)}</td>
                 <td className="data p-3 text-xs text-pizarra">{new Date(p.updatedAt).toLocaleDateString(locale)}</td>
+                <td className="p-3 text-right">
+                  <Link href={`/admin/productos/${p.id}`} className="btn h-9 gap-2 border border-linea px-3 hover:border-granito">
+                    <PencilSimple size={14} aria-hidden /> {t("edit")}
+                  </Link>
+                </td>
               </tr>
             ))}
             {list.items.length === 0 && (
-              <tr><td colSpan={10}className="p-8 text-center text-pizarra">{t("empty")}</td></tr>
+              <tr><td colSpan={11} className="p-8 text-center text-pizarra">{t("empty")}</td></tr>
             )}
           </tbody>
         </table>
