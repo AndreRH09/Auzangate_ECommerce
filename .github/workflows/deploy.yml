@@ -1,0 +1,69 @@
+name: deploy
+
+# Producción (plan §9.3): migra la BD → despliega la API en Render → construye y despliega el worker.
+# El worker se construye AQUÍ y no en una máquina local: OpenNext empaqueta los .env del monorepo dentro
+# del worker, y el .env de desarrollo tiene secretos. En CI solo existe el .env.production que se escribe abajo.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: "Cargar semillas (admin, zonas de envío, catálogo de ejemplo). Solo el primer deploy."
+        type: boolean
+        default: false
+
+concurrency: production
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Migraciones (y semillas si se pidieron)
+        working-directory: apps/api
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_CA: ${{ secrets.DATABASE_CA }}
+          SEED_ADMIN_EMAIL: ${{ secrets.SEED_ADMIN_EMAIL }}
+          SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
+        run: |
+          # el motor de migraciones de Prisma no usa el driver mariadb: TLS con la CA por parámetros del URL
+          printf '%s' "$DATABASE_CA" > "$RUNNER_TEMP/ca.pem"
+          DATABASE_URL="${DATABASE_URL%%\?*}?sslaccept=strict&sslcert=$RUNNER_TEMP/ca.pem" pnpm exec prisma migrate deploy
+          if [ "${{ inputs.seed }}" = "true" ]; then pnpm db:seed; fi
+
+      - name: Deploy de la API en Render
+        env:
+          API_URL: ${{ vars.API_URL }}
+        run: |
+          curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" > /dev/null
+          # ponytail: espera a que /health responda (despierta la instancia), no a que termine el deploy nuevo;
+          # el build del worker solo usa endpoints públicos del catálogo. Consultar la API de Render si eso cambia.
+          for i in $(seq 1 60); do curl -fsS "$API_URL/health" && exit 0; sleep 10; done
+          echo "La API no respondió en 10 min"; exit 1
+
+      - name: Build del worker (OpenNext)
+        working-directory: apps/web
+        run: |
+          # solo valores públicos: OpenNext los compila dentro del worker
+          printf 'API_URL=%s\nSITE_URL=%s\nSITE_ENV=production\n' "${{ vars.API_URL }}" "${{ vars.SITE_URL }}" > .env.production
+          pnpm exec opennextjs-cloudflare build
+
+      - name: Deploy del worker (Cloudflare)
+        working-directory: apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm exec opennextjs-cloudflare deploy

@@ -5,6 +5,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().default(3000),
   DATABASE_URL: z.url({ protocol: /^mysql$/ }),
+  // CA del servidor MySQL en PEM (Aiven la da en la consola). Sin ella, conexión sin TLS (Docker local)
+  DATABASE_CA: z.string().includes('BEGIN CERTIFICATE').optional(),
   SWAGGER_ENABLED: z.stringbool().default(true),
   // base pública del bucket R2 (sin "/" final); las claves del seed son URLs absolutas y no la usan
   IMAGE_BASE_URL: z.string().default(''),
