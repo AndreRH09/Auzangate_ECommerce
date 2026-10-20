@@ -1,12 +1,13 @@
 "use server";
 
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import type { Locale } from "@/i18n/routing";
-import { ADMIN_COOKIE, AdminApiError, adminApi } from "@/lib/admin";
-import { type AdminProduct, type AdminProductInput, API_URL, type LoginResponse } from "@/lib/api";
+import { ADMIN_COOKIE, AdminApiError, adminApi, getAdmin } from "@/lib/admin";
+import { type AdminImage, type AdminProduct, type AdminProductInput, API_URL, type LoginResponse } from "@/lib/api";
 
 // BFF: el navegador nunca llama a la API directo (plan §1)
 export async function subscribe(_: unknown, form: FormData): Promise<"ok" | "error"> {
@@ -68,6 +69,20 @@ export async function saveProduct(id: string, _: SaveState, form: FormData): Pro
     categoryId: text("categoryId"),
     seriesId: text("seriesId") || null,
     translations: { es: translation("es"), en: translation("en") } as AdminProductInput["translations"],
+    // fotos: inputs repetidos img.* en el orden de la galería
+    images: form.getAll("img.id").map((imgId, i) => ({
+      id: String(imgId),
+      colorHex: String(form.getAll("img.color")[i] ?? "") || null,
+      altEs: String(form.getAll("img.altEs")[i] ?? ""),
+      altEn: String(form.getAll("img.altEn")[i] ?? ""),
+    })),
+    // colores de variantes: inputs repetidos color.*
+    colors: form.getAll("color.from").map((from, i) => ({
+      from: String(from),
+      hex: String(form.getAll("color.hex")[i] ?? ""),
+      nameEs: String(form.getAll("color.nameEs")[i] ?? ""),
+      nameEn: String(form.getAll("color.nameEn")[i] ?? ""),
+    })),
   };
   try {
     const product = await adminApi<AdminProduct>(`/products/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(body) });
@@ -77,6 +92,44 @@ export async function saveProduct(id: string, _: SaveState, form: FormData): Pro
     if (e instanceof AdminApiError) return { ok: false, errors: e.messages };
     throw e;
   }
+}
+
+const IMAGE_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/avif": "avif" };
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
+export type ImageState = { ok: true; image: AdminImage } | { ok: false; errors: string[] };
+
+// F1·5. El archivo va a R2 (binding MEDIA) y luego la API registra la fila. Sin alt: se completa y se guarda con el formulario.
+// ponytail: se guarda el archivo tal cual; WebP/AVIF y tamaños con Cloudflare Images cuando se active.
+export async function uploadImage(productId: string, form: FormData): Promise<ImageState> {
+  // R2 se escribe antes que la API: la sesión se comprueba primero
+  if (!(await getAdmin())) redirect(`/${await getLocale()}/admin/login`);
+  const file = form.get("file");
+  const ext = file instanceof File ? IMAGE_TYPES[file.type] : undefined;
+  if (!(file instanceof File) || !ext || !/^[a-z0-9]+$/.test(productId)) return { ok: false, errors: ["image_type"] };
+  if (file.size > MAX_IMAGE_BYTES) return { ok: false, errors: ["image_size"] };
+
+  const r2Key = `products/${productId}/${crypto.randomUUID()}.${ext}`;
+  const { env } = await getCloudflareContext({ async: true });
+  await env.MEDIA.put(r2Key, await file.arrayBuffer(), { httpMetadata: { contentType: file.type } });
+  try {
+    const product = await adminApi<AdminProduct>(`/products/${productId}/images`, {
+      method: "POST",
+      body: JSON.stringify({ r2Key, width: Number(form.get("width")), height: Number(form.get("height")) }),
+    });
+    return { ok: true, image: product.images.at(-1)! }; // se agrega al final de la galería
+  } catch (e) {
+    await env.MEDIA.delete(r2Key); // sin fila en la BD el archivo quedaría huérfano
+    if (e instanceof AdminApiError) return { ok: false, errors: e.messages };
+    throw e;
+  }
+}
+
+export async function deleteImage(productId: string, imageId: string) {
+  const { r2Key } = await adminApi<{ r2Key: string }>(`/products/${encodeURIComponent(productId)}/images/${encodeURIComponent(imageId)}`, { method: "DELETE" });
+  // las fotos del seed son rutas del front o URLs externas, no están en R2
+  if (r2Key.startsWith("products/")) await (await getCloudflareContext({ async: true })).env.MEDIA.delete(r2Key);
+  updateTag("catalog"); // la tienda no debe seguir apuntando al archivo borrado
 }
 
 export async function logout() {

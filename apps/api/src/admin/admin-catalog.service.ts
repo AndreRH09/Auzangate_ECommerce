@@ -6,7 +6,7 @@ import type { AdminCatalogOptions, AdminProduct, AdminProductList, AdminSaveErro
 import { Prisma, ProductStatus } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { slugify } from '../slugify.js';
-import type { AdminProductsQuery, SaveProductDto } from './admin-catalog.dto.js';
+import type { AddImageDto, AdminProductsQuery, SaveProductDto } from './admin-catalog.dto.js';
 
 const PAGE_SIZE = 25;
 const LOCALES = ['es', 'en'] as const satisfies Locale[];
@@ -100,7 +100,7 @@ export class AdminCatalogService {
   async product(id: string): Promise<AdminProduct> {
     const p = await this.prisma.product.findUnique({
       where: { id },
-      include: { translations: true, _count: { select: { variants: true, images: true } } },
+      include: { translations: true, images: { orderBy: { sort: 'asc' } }, variants: { select: { colorHex: true, colorName: true } } },
     });
     if (!p) throw new NotFoundException();
     const empty: ProductTranslationInput = { name: '', slug: '', subtitle: '', description: '', techSpecs: {} };
@@ -116,55 +116,102 @@ export class AdminCatalogService {
       categoryId: p.categoryId,
       seriesId: p.seriesId,
       translations: { es: t('es'), en: t('en') },
-      variants: p._count.variants,
-      images: p._count.images,
+      variants: p.variants.length,
+      images: p.images.map((i) => ({ id: i.id, url: toImageUrl(i.r2Key, this.imageBase), colorHex: i.colorHex, altEs: i.altEs, altEn: i.altEn, width: i.width, height: i.height })),
+      // un color por hex (las tallas lo repiten)
+      colors: [...new Map(p.variants.map((v) => [v.colorHex, v.colorName as Record<Locale, string>])).entries()].map(([hex, n]) => ({ hex, nameEs: n.es, nameEn: n.en })),
       updatedAt: p.updatedAt.toISOString(),
     };
   }
 
-  // RF-A02/A03/A08. Reemplaza los datos editables; variantes e imágenes no se tocan aquí.
+  // F1·5. El archivo ya está en R2 (lo sube la web); aquí solo se registra al final de la galería, sin alt.
+  async addImage(id: string, { r2Key, width, height }: AddImageDto): Promise<AdminProduct> {
+    if (!r2Key.startsWith(`products/${id}/`)) throw new BadRequestException();
+    const last = await this.prisma.productImage.findFirst({ where: { productId: id }, orderBy: { sort: 'desc' }, select: { sort: true } });
+    try {
+      await this.prisma.productImage.create({ data: { productId: id, r2Key, width, height, altEs: '', altEn: '', sort: (last?.sort ?? -1) + 1 } });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') throw new NotFoundException();
+      throw e;
+    }
+    return this.product(id);
+  }
+
+  /** devuelve la clave para que la web borre el archivo de R2 */
+  async deleteImage(id: string, imageId: string): Promise<{ r2Key: string }> {
+    const img = await this.prisma.productImage.findFirst({ where: { id: imageId, productId: id }, select: { r2Key: true } });
+    if (!img) throw new NotFoundException();
+    await this.prisma.productImage.delete({ where: { id: imageId } });
+    return img;
+  }
+
+  // RF-A02/A03/A08. Reemplaza los datos editables, el alt/color/orden de las fotos y el hex/nombre de cada color de variantes.
   async update(id: string, dto: SaveProductDto): Promise<AdminProduct> {
     if (!(await this.prisma.product.count({ where: { id } }))) throw new NotFoundException();
     if (LOCALES.some((l) => !validSpecs(dto.translations[l].techSpecs))) throw fail(BadRequestException, 'invalid_tech_specs');
-
-    // RF-A08: no se publica sin ≥ 1 variante con precio ni ≥ 1 imagen con alt en ambos idiomas
-    if (dto.status === ProductStatus.PUBLISHED) {
-      const [priced, withAlt] = await Promise.all([
-        this.prisma.productVariant.count({ where: { productId: id, priceCents: { gt: 0 } } }),
-        this.prisma.productImage.count({ where: { productId: id, altEs: { not: '' }, altEn: { not: '' } } }),
-      ]);
-      const missing: AdminSaveError[] = [];
-      if (!priced) missing.push('need_variant_price');
-      if (!withAlt) missing.push('need_image_alt');
-      if (missing.length) throw fail(UnprocessableEntityException, ...missing);
-    }
+    const colors = (dto.colors ?? []).map((c) => ({ from: c.from.toUpperCase(), hex: c.hex.toUpperCase(), nameEs: c.nameEs, nameEn: c.nameEn }));
+    if (new Set(colors.map((c) => c.hex)).size < colors.length) throw fail(ConflictException, 'color_taken');
 
     const translation = (locale: Locale) => {
       const { name, slug, subtitle, description, techSpecs } = dto.translations[locale];
       return { name: name.trim(), slug: slug || slugify(name), subtitle, description, techSpecs };
     };
+    // Una transacción: si la validación de publicación falla, tampoco quedan guardados los cambios de fotos.
     try {
-      await this.prisma.product.update({
-        where: { id },
-        data: {
-          code: dto.code,
-          status: dto.status,
-          gender: dto.gender,
-          categoryId: dto.categoryId,
-          seriesId: dto.seriesId ?? null,
-          translations: {
-            upsert: LOCALES.map((locale) => ({
-              where: { productId_locale: { productId: id, locale } },
-              create: { locale, ...translation(locale) },
-              update: translation(locale),
-            })),
+      await this.prisma.$transaction(async (tx) => {
+        // ponytail: cada color se mueve directo a su hex nuevo; intercambiar dos colores en un mismo guardado choca con el único (color_taken)
+        for (const c of colors) {
+          await tx.productVariant.updateMany({
+            where: { productId: id, colorHex: c.from },
+            data: { colorHex: c.hex, colorName: { es: c.nameEs.trim(), en: c.nameEn.trim() } },
+          });
+        }
+
+        // updateMany con productId: ignora ids ajenos o ya borrados. colorHex tal cual: la galería lo compara como texto con ProductVariant.colorHex
+        for (const [sort, img] of (dto.images ?? []).entries()) {
+          await tx.productImage.updateMany({
+            where: { id: img.id, productId: id },
+            data: { sort, colorHex: img.colorHex?.toUpperCase() ?? null, altEs: img.altEs.trim(), altEn: img.altEn.trim() },
+          });
+        }
+
+        // RF-A08: no se publica sin ≥ 1 variante con precio ni ≥ 1 imagen con alt en ambos idiomas
+        if (dto.status === ProductStatus.PUBLISHED) {
+          const [priced, withAlt] = await Promise.all([
+            tx.productVariant.count({ where: { productId: id, priceCents: { gt: 0 } } }),
+            tx.productImage.count({ where: { productId: id, altEs: { not: '' }, altEn: { not: '' } } }),
+          ]);
+          const missing: AdminSaveError[] = [];
+          if (!priced) missing.push('need_variant_price');
+          if (!withAlt) missing.push('need_image_alt');
+          if (missing.length) throw fail(UnprocessableEntityException, ...missing);
+        }
+
+        await tx.product.update({
+          where: { id },
+          data: {
+            code: dto.code,
+            status: dto.status,
+            gender: dto.gender,
+            categoryId: dto.categoryId,
+            seriesId: dto.seriesId ?? null,
+            translations: {
+              upsert: LOCALES.map((locale) => ({
+                where: { productId_locale: { productId: id, locale } },
+                create: { locale, ...translation(locale) },
+                update: translation(locale),
+              })),
+            },
           },
-        },
+        });
       });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         // P2002 = único repetido (código o slug); P2003 = categoría/serie inexistente
-        if (e.code === 'P2002') throw fail(ConflictException, JSON.stringify(e.meta).includes('code') ? 'code_taken' : 'slug_taken');
+        if (e.code === 'P2002') {
+          const meta = JSON.stringify(e.meta);
+          throw fail(ConflictException, meta.includes('colorHex') ? 'color_taken' : meta.includes('code') ? 'code_taken' : 'slug_taken');
+        }
         if (e.code === 'P2003') throw fail(BadRequestException, 'invalid_category');
       }
       throw e;

@@ -102,11 +102,31 @@ export type AdminProductInput = {
   categoryId: string;
   seriesId: string | null;
   translations: Record<Locale, ProductTranslationInput>;
+  images?: AdminImageEdit[]; // solo en el PUT; omitido = no se tocan las fotos
+  colors?: AdminColorEdit[]; // solo en el PUT; renombra/recolorea las variantes de cada color
 };
 
-export type AdminProduct = AdminProductInput & { id: string; variants: number; images: number; updatedAt: string };
+// Color de las variantes en el admin: `from` = hex actual (identifica el grupo de variantes).
+export type AdminColor = { hex: string; nameEs: string; nameEn: string };
+export type AdminColorEdit = AdminColor & { from: string };
+
+// Foto en el admin: r2Key es la clave en el bucket (o una ruta/URL de las fotos del seed).
+export type AdminImage = { id: string; url: string; colorHex: string | null; altEs: string; altEn: string; width: number; height: number };
+
+// Lo editable de cada foto desde el formulario; el orden del arreglo es el orden de la galería.
+export type AdminImageEdit = { id: string; colorHex: string | null; altEs: string; altEn: string };
+
+export type AdminProduct = Omit<AdminProductInput, 'images' | 'colors'> & {
+  id: string;
+  variants: number;
+  images: AdminImage[];
+  colors: AdminColor[]; // colores de las variantes (uno por hex), para agrupar fotos
+  updatedAt: string;
+};
+
+export type AdminImageUpload = { r2Key: string; width: number; height: number };
 
 export type AdminCatalogOptions = { categories: { id: string; name: string }[]; series: { id: string; name: string }[] };
 
 // Códigos de error de guardado (409/422); la web los traduce.
-export type AdminSaveError = 'code_taken' | 'slug_taken' | 'invalid_category' | 'need_variant_price' | 'need_image_alt' | 'invalid_tech_specs';
+export type AdminSaveError = 'code_taken' | 'slug_taken' | 'invalid_category' | 'need_variant_price' | 'need_image_alt' | 'invalid_tech_specs' | 'color_taken';

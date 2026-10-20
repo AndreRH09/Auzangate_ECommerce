@@ -114,6 +114,41 @@ describe('Admin de catálogo (e2e)', () => {
         await prisma.product.delete({ where: { id: temp.id } });
       }
     });
+
+    it('fotos: registra, edita alt/color en el PUT (con rollback si falla A08) y borra', async () => {
+      const prisma = app.get(PrismaService);
+      const t = { name: 'Temporal AN98', subtitle: '', description: '', techSpecs: {} };
+      const temp = await prisma.product.create({
+        data: { code: 'AN98', categoryId: original.categoryId, translations: { create: [{ locale: 'es', slug: 'temporal-an98', ...t }, { locale: 'en', slug: 'temp-an98', ...t }] } },
+      });
+      const auth = (r: request.Test) => r.set('authorization', `Bearer ${token}`);
+      const r2Key = `products/${temp.id}/0f8fad5b-d9cb-469f-a165-70867728950e.webp`;
+      const body = (status: string, alt: string, imageId: string) => ({
+        ...input(() => {}),
+        code: 'AN98',
+        status,
+        translations: { es: { ...t, slug: 'temporal-an98' }, en: { ...t, slug: 'temp-an98' } },
+        images: [{ id: imageId, colorHex: '#AABBCC', altEs: alt, altEn: alt }],
+      });
+      try {
+        await auth(request(app.getHttpServer()).post(`/v1/admin/products/${temp.id}/images`)).send({ r2Key: 'products/otro/x.webp', width: 1, height: 1 }).expect(400);
+        const added = (await auth(request(app.getHttpServer()).post(`/v1/admin/products/${temp.id}/images`)).send({ r2Key, width: 1200, height: 1500 }).expect(201)).body as AdminProduct;
+        const img = added.images[0]!;
+        expect(img).toMatchObject({ url: expect.stringContaining(r2Key), altEs: '', width: 1200 });
+
+        // sin variante con precio no publica, y el alt escrito en ese PUT no queda guardado
+        await put(temp.id, body('PUBLISHED', 'Vista frontal', img.id)).expect(422);
+        expect((await detail(temp.id)).images[0]).toMatchObject({ altEs: '', colorHex: null });
+        const saved = (await put(temp.id, body('DRAFT', 'Vista frontal', img.id)).expect(200)).body as AdminProduct;
+        expect(saved.images[0]).toMatchObject({ altEs: 'Vista frontal', altEn: 'Vista frontal', colorHex: '#AABBCC' });
+
+        const del = await auth(request(app.getHttpServer()).delete(`/v1/admin/products/${temp.id}/images/${img.id}`)).expect(200);
+        expect(del.body).toEqual({ r2Key });
+        expect((await detail(temp.id)).images).toEqual([]);
+      } finally {
+        await prisma.product.delete({ where: { id: temp.id } });
+      }
+    });
   });
 
   it('opciones del formulario con ids', async () => {

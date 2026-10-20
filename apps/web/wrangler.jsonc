@@ -9,5 +9,7 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  // Fotos de producto (F1·5): las sube el admin y las sirve /media/*. En `next dev` es un bucket local (.wrangler/state)
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "auzangate-media" }],
   "observability": { "enabled": true }
 }

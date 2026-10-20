@@ -1,5 +1,9 @@
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+
+// `next dev` con los bindings de wrangler.jsonc (R2 local para las fotos)
+if (process.env.NODE_ENV === "development") void initOpenNextCloudflareForDev();
 
 // ponytail: sin cacheComponents/partialPrefetching (defaults del CLI). El plan usa ISR con
 // revalidate + revalidateTag; se evalúa el modelo nuevo cuando OpenNext lo soporte estable.
@@ -14,6 +18,8 @@ const nextConfig: NextConfig = {
       ? [{ source: "/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex" }] }]
       : [];
   },
+  // las fotos del admin suben por server action (límite por defecto: 1 MB)
+  experimental: { serverActions: { bodySizeLimit: "10mb" } },
   turbopack: {
     rules: {
       "*.css": {

@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Module, Param, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Module, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from '../auth/admin.guard.js';
 import { LocaleQuery } from '../catalog/catalog.dto.js';
-import { AdminProductsQuery, SaveProductDto } from './admin-catalog.dto.js';
+import { AddImageDto, AdminProductsQuery, SaveProductDto } from './admin-catalog.dto.js';
 import { AdminCatalogService } from './admin-catalog.service.js';
 
 // Todo bajo /v1/admin exige sesión de admin.
@@ -33,6 +33,18 @@ class AdminCatalogController {
   @Put('products/:id')
   update(@Param('id') id: string, @Body() dto: SaveProductDto) {
     return this.catalog.update(id, dto);
+  }
+
+  /** registra una foto ya subida a R2 por la web */
+  @Post('products/:id/images')
+  addImage(@Param('id') id: string, @Body() dto: AddImageDto) {
+    return this.catalog.addImage(id, dto);
+  }
+
+  /** → { r2Key } para borrar el archivo del bucket */
+  @Delete('products/:id/images/:imageId')
+  deleteImage(@Param('id') id: string, @Param('imageId') imageId: string) {
+    return this.catalog.deleteImage(id, imageId);
   }
 }
 
