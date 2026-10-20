@@ -1,13 +1,23 @@
 "use server";
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { updateTag } from "next/cache";
+import { refresh, updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import type { Locale } from "@/i18n/routing";
 import { ADMIN_COOKIE, AdminApiError, adminApi, getAdmin } from "@/lib/admin";
-import { type AdminColorDelete, type AdminImage, type AdminProduct, type AdminProductInput, API_URL, type LoginResponse } from "@/lib/api";
+import {
+  type AdminCategoryInput,
+  type AdminColorDelete,
+  type AdminImage,
+  type AdminProduct,
+  type AdminProductCreate,
+  type AdminProductInput,
+  type AdminSeriesInput,
+  API_URL,
+  type LoginResponse,
+} from "@/lib/api";
 
 // BFF: el navegador nunca llama a la API directo (plan §1)
 export async function subscribe(_: unknown, form: FormData): Promise<"ok" | "error"> {
@@ -68,8 +78,15 @@ export async function saveProduct(id: string, _: SaveState, form: FormData): Pro
     categoryId: text("categoryId"),
     seriesId: text("seriesId") || null,
     translations: { es: translation("es"), en: translation("en") },
-    // soles con 2 decimales -> céntimos; sin campo (producto sin variantes) no se toca
-    priceCents: form.has("price") ? Math.round(Number(text("price")) * 100) : undefined,
+    // variantes: inputs repetidos var.* (lista completa; id vacío = nueva). Soles con 2 decimales -> céntimos
+    variants: form.getAll("var.sku").map((sku, i) => ({
+      id: String(form.getAll("var.id")[i] ?? "") || undefined,
+      colorHex: String(form.getAll("var.color")[i] ?? ""),
+      size: String(form.getAll("var.size")[i] ?? "").trim(),
+      sku: String(sku).trim().toUpperCase(),
+      priceCents: Math.round(Number(form.getAll("var.price")[i]) * 100),
+      stock: Number(form.getAll("var.stock")[i]),
+    })),
     // fotos: inputs repetidos img.* en el orden de la galería
     images: form.getAll("img.id").map((imgId, i) => ({
       id: String(imgId),
@@ -93,6 +110,73 @@ export async function saveProduct(id: string, _: SaveState, form: FormData): Pro
     if (e instanceof AdminApiError) return { ok: false, errors: e.messages };
     throw e;
   }
+}
+
+export type ErrorState = { ok: false; errors: string[] } | null;
+
+// RF-A02 (alta): crea el borrador y abre su edición para completar ficha, variantes y fotos.
+export async function createProduct(_: ErrorState, form: FormData): Promise<ErrorState> {
+  const text = (name: string) => String(form.get(name) ?? "").trim();
+  const body: AdminProductCreate = {
+    code: text("code").toUpperCase(),
+    gender: text("gender") as AdminProductCreate["gender"],
+    categoryId: text("categoryId"),
+    seriesId: text("seriesId") || null,
+    names: { es: text("es.name"), en: text("en.name") },
+  };
+  let id: string;
+  try {
+    ({ id } = await adminApi<AdminProduct>("/products", { method: "POST", body: JSON.stringify(body) }));
+  } catch (e) {
+    if (e instanceof AdminApiError) return { ok: false, errors: e.messages };
+    throw e;
+  }
+  redirect(`/${await getLocale()}/admin/productos/${id}`); // fuera del try: redirect se lanza como excepción
+}
+
+// Borra el producto (API, una transacción) y después sus archivos de R2.
+export async function deleteProduct(id: string): Promise<ErrorState> {
+  try {
+    const { r2Keys } = await adminApi<{ r2Keys: string[] }>(`/products/${encodeURIComponent(id)}`, { method: "DELETE" });
+    const { env } = await getCloudflareContext({ async: true });
+    await Promise.all(r2Keys.filter((k) => k.startsWith("products/")).map((k) => env.MEDIA.delete(k)));
+  } catch (e) {
+    if (e instanceof AdminApiError) return { ok: false, errors: e.messages };
+    throw e;
+  }
+  updateTag("catalog");
+  redirect(`/${await getLocale()}/admin/productos`);
+}
+
+// RF-A06. Tras guardar: la tienda expira su caché (menús, filtros) y el admin se vuelve a pintar con la lista nueva.
+async function taxonomy(path: string, method: "POST" | "PUT" | "DELETE", body?: object): Promise<ErrorState> {
+  try {
+    await adminApi(path, { method, body: body && JSON.stringify(body) });
+  } catch (e) {
+    if (e instanceof AdminApiError) return { ok: false, errors: e.messages };
+    throw e;
+  }
+  updateTag("catalog");
+  refresh();
+  return null;
+}
+
+/** id null = categoría nueva */
+export async function saveCategory(id: string | null, _: ErrorState, form: FormData): Promise<ErrorState> {
+  const body: AdminCategoryInput = {
+    parentId: String(form.get("parentId") ?? "") || null,
+    sort: Number(form.get("sort") ?? 0),
+    names: { es: String(form.get("es.name") ?? "").trim(), en: String(form.get("en.name") ?? "").trim() },
+  };
+  return id ? taxonomy(`/categories/${encodeURIComponent(id)}`, "PUT", body) : taxonomy("/categories", "POST", body);
+}
+
+export const deleteCategory = async (id: string) => taxonomy(`/categories/${encodeURIComponent(id)}`, "DELETE");
+
+export async function saveSeries(id: string, _: ErrorState, form: FormData): Promise<ErrorState> {
+  const t = (l: Locale) => ({ name: String(form.get(`${l}.name`) ?? "").trim(), description: String(form.get(`${l}.description`) ?? "").trim() });
+  const body: AdminSeriesInput = { sort: Number(form.get("sort") ?? 0), translations: { es: t("es"), en: t("en") } };
+  return taxonomy(`/series/${encodeURIComponent(id)}`, "PUT", body);
 }
 
 const IMAGE_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/avif": "avif" };

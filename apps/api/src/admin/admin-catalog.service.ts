@@ -6,7 +6,7 @@ import type { AdminCatalogOptions, AdminProduct, AdminProductList, AdminSaveErro
 import { Prisma, ProductStatus } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { slugify } from '../slugify.js';
-import type { AddImageDto, AdminProductsQuery, DeleteColorDto, SaveProductDto } from './admin-catalog.dto.js';
+import type { AddImageDto, AdminProductsQuery, CreateProductDto, DeleteColorDto, SaveProductDto } from './admin-catalog.dto.js';
 
 const PAGE_SIZE = 10;
 const LOCALES = ['es', 'en'] as const satisfies Locale[];
@@ -100,7 +100,7 @@ export class AdminCatalogService {
   async product(id: string): Promise<AdminProduct> {
     const p = await this.prisma.product.findUnique({
       where: { id },
-      include: { translations: true, images: { orderBy: { sort: 'asc' } }, variants: { select: { colorHex: true, colorName: true, priceCents: true } } },
+      include: { translations: true, images: { orderBy: { sort: 'asc' } }, variants: { orderBy: { sku: 'asc' } } },
     });
     if (!p) throw new NotFoundException();
     const empty = { name: '', slug: '', subtitle: '', description: '', techSpecs: {} };
@@ -116,8 +116,7 @@ export class AdminCatalogService {
       categoryId: p.categoryId,
       seriesId: p.seriesId,
       translations: { es: t('es'), en: t('en') },
-      priceCents: p.variants.length ? Math.min(...p.variants.map((v) => v.priceCents)) : null,
-      variants: p.variants.length,
+      variants: p.variants.map(({ id, colorHex, size, sku, priceCents, stock }) => ({ id, colorHex, size, sku, priceCents, stock })),
       images: p.images.map((i) => ({ id: i.id, url: toImageUrl(i.r2Key, this.imageBase), colorHex: i.colorHex, altEs: i.altEs, altEn: i.altEn, width: i.width, height: i.height })),
       // un color por hex (las tallas lo repiten)
       colors: [...new Map(p.variants.map((v) => [v.colorHex, v.colorName as Record<Locale, string>])).entries()].map(([hex, n]) => ({
@@ -128,6 +127,35 @@ export class AdminCatalogService {
       })),
       updatedAt: p.updatedAt.toISOString(),
     };
+  }
+
+  // RF-A02 (alta): borrador con nombre ES/EN; ficha, variantes y fotos se completan editando.
+  async create({ code, gender, categoryId, seriesId, names }: CreateProductDto): Promise<AdminProduct> {
+    const translation = (locale: Locale) => ({ locale, name: names[locale].trim(), slug: slugify(names[locale]), subtitle: '', description: '', techSpecs: {} });
+    try {
+      const { id } = await this.prisma.product.create({
+        data: { code, gender, categoryId, seriesId: seriesId ?? null, translations: { create: LOCALES.map(translation) } },
+      });
+      return this.product(id);
+    } catch (e) {
+      throw this.saveError(e);
+    }
+  }
+
+  /** borra el producto con sus variantes y fotos → claves de R2 para que la web limpie el bucket */
+  async remove(id: string): Promise<{ r2Keys: string[] }> {
+    const images = await this.prisma.productImage.findMany({ where: { productId: id }, select: { r2Key: true } });
+    try {
+      await this.prisma.product.delete({ where: { id } });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === 'P2025') throw new NotFoundException();
+        // P2003: alguna variante ya está en una orden (OrderItem no borra en cascada); se archiva en su lugar
+        if (e.code === 'P2003') throw fail(ConflictException, 'product_in_use');
+      }
+      throw e;
+    }
+    return { r2Keys: images.map((i) => i.r2Key) };
   }
 
   // F1·5. El archivo ya está en R2 (lo sube la web); aquí solo se registra al final de la galería, sin alt.
@@ -193,8 +221,24 @@ export class AdminCatalogService {
           });
         }
 
-        // ponytail: un precio por producto (todas sus variantes); precio por talla/color llega con el editor de variantes (F1·4d)
-        if (dto.priceCents !== undefined) await tx.productVariant.updateMany({ where: { productId: id }, data: { priceCents: dto.priceCents } });
+        // RF-A04: la lista de variantes reemplaza a la guardada (borra las que falten, actualiza por id, crea las nuevas)
+        if (dto.variants) {
+          const rows = dto.variants.map(({ id, colorHex, size, sku, priceCents, stock }) => ({ id, colorHex: colorHex.toUpperCase(), size: size.trim(), sku, priceCents, stock }));
+          if (new Set(rows.map((v) => `${v.colorHex}|${v.size}`)).size < rows.length) throw fail(ConflictException, 'size_taken');
+          if (new Set(rows.map((v) => v.sku)).size < rows.length) throw fail(ConflictException, 'sku_taken');
+          // nombre de cada color: el que llega en colors[] (incluye colores nuevos) o el ya guardado
+          const saved = await tx.productVariant.findMany({ where: { productId: id }, select: { colorHex: true, colorName: true } });
+          const names = new Map(saved.map((v) => [v.colorHex, v.colorName as Record<Locale, string>]));
+          for (const c of colors) names.set(c.hex, { es: c.nameEs.trim(), en: c.nameEn.trim() });
+          if (rows.some((v) => !names.has(v.colorHex))) throw fail(BadRequestException, 'need_color_name');
+
+          await tx.productVariant.deleteMany({ where: { productId: id, id: { notIn: rows.flatMap((v) => (v.id ? [v.id] : [])) } } });
+          for (const { id: variantId, ...v } of rows) {
+            const data = { ...v, colorName: names.get(v.colorHex)! };
+            if (variantId) await tx.productVariant.updateMany({ where: { id: variantId, productId: id }, data });
+            else await tx.productVariant.create({ data: { ...data, productId: id } });
+          }
+        }
 
         // updateMany con productId: ignora ids ajenos o ya borrados. colorHex tal cual: la galería lo compara como texto con ProductVariant.colorHex
         for (const [sort, img] of (dto.images ?? []).entries()) {
@@ -235,16 +279,19 @@ export class AdminCatalogService {
         });
       });
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        // P2002 = único repetido (código o slug); P2003 = categoría/serie inexistente
-        if (e.code === 'P2002') {
-          const meta = JSON.stringify(e.meta);
-          throw fail(ConflictException, meta.includes('colorHex') ? 'color_taken' : meta.includes('code') ? 'code_taken' : 'slug_taken');
-        }
-        if (e.code === 'P2003') throw fail(BadRequestException, 'invalid_category');
-      }
-      throw e;
+      throw this.saveError(e);
     }
     return this.product(id);
+  }
+
+  // P2002 = único repetido (SKU, color, código o slug); P2003 = variante en órdenes o categoría/serie inexistente
+  private saveError(e: unknown) {
+    if (!(e instanceof Prisma.PrismaClientKnownRequestError)) return e;
+    const meta = JSON.stringify(e.meta);
+    if (e.code === 'P2002') {
+      return fail(ConflictException, meta.includes('sku') ? 'sku_taken' : meta.includes('colorHex') ? 'color_taken' : meta.includes('code') ? 'code_taken' : 'slug_taken');
+    }
+    if (e.code === 'P2003') return meta.includes('variant') ? fail(ConflictException, 'variant_in_use') : fail(BadRequestException, 'invalid_category');
+    return e;
   }
 }

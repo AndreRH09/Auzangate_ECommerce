@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Module, Param, Post, Put, Query, UseGuar
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from '../auth/admin.guard.js';
 import { LocaleQuery } from '../catalog/catalog.dto.js';
-import { AddImageDto, AdminProductsQuery, DeleteColorDto, SaveProductDto } from './admin-catalog.dto.js';
+import { AddImageDto, AdminProductsQuery, CreateProductDto, DeleteColorDto, SaveProductDto } from './admin-catalog.dto.js';
 import { AdminCatalogService } from './admin-catalog.service.js';
 
 // Todo bajo /v1/admin exige sesión de admin.
@@ -24,12 +24,24 @@ class AdminCatalogController {
     return this.catalog.options(locale);
   }
 
+  /** alta en borrador · 409 code_taken | slug_taken · 400 invalid_category */
+  @Post('products')
+  create(@Body() dto: CreateProductDto) {
+    return this.catalog.create(dto);
+  }
+
   @Get('products/:id')
   product(@Param('id') id: string) {
     return this.catalog.product(id);
   }
 
-  /** 409 { message: ['code_taken' | 'slug_taken' | 'color_taken'] } · 422 { message: ['need_variant_price', 'need_image_alt'] } */
+  /** → { r2Keys } para limpiar el bucket · 409 product_in_use si alguna variante está en órdenes */
+  @Delete('products/:id')
+  remove(@Param('id') id: string) {
+    return this.catalog.remove(id);
+  }
+
+  /** 409 { message: ['code_taken' | 'slug_taken' | 'color_taken' | 'sku_taken' | 'size_taken' | 'variant_in_use'] } · 422 { message: ['need_variant_price', 'need_image_alt'] } */
   @Put('products/:id')
   update(@Param('id') id: string, @Body() dto: SaveProductDto) {
     return this.catalog.update(id, dto);

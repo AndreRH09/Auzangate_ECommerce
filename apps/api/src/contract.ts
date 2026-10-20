@@ -102,14 +102,21 @@ export type AdminProductInput = {
   categoryId: string;
   seriesId: string | null;
   translations: Record<Locale, ProductTranslationInput>;
-  priceCents?: number; // precio de todas las variantes; omitido = no se toca
   images?: AdminImageEdit[]; // omitido = no se tocan las fotos
-  colors?: AdminColorEdit[]; // renombra/recolorea las variantes de cada color
+  colors?: AdminColorEdit[]; // renombra/recolorea las variantes de cada color y da nombre a los colores nuevos
+  variants?: AdminVariantInput[]; // lista completa: las que no vengan se borran; omitido = no se tocan
 };
 
-// Color de las variantes en el admin: `from` = hex actual (identifica el grupo de variantes).
+// Alta mínima: nace en borrador y se completa en el formulario de edición.
+export type AdminProductCreate = Pick<AdminProductInput, 'code' | 'gender' | 'categoryId' | 'seriesId'> & { names: Record<Locale, string> };
+
+// Color de las variantes en el admin: `from` = hex actual (identifica el grupo de variantes; en un color nuevo, su propio hex).
 export type AdminColor = { hex: string; nameEs: string; nameEn: string };
 export type AdminColorEdit = AdminColor & { from: string };
+
+// Variante = color × talla. colorHex es el hex final (después de recolorear); sin id = nueva.
+export type AdminVariant = { id: string; colorHex: string; size: string; sku: string; priceCents: number; stock: number };
+export type AdminVariantInput = Omit<AdminVariant, 'id'> & { id?: string };
 
 // Borra un color: sus variantes (por hex guardado) y sus fotos (por id, incluye las aún sin color guardado).
 export type AdminColorDelete = { hex: string | null; imageIds: string[] };
@@ -120,11 +127,10 @@ export type AdminImage = { id: string; url: string; colorHex: string | null; alt
 // Lo editable de cada foto desde el formulario; el orden del arreglo es el orden de la galería.
 export type AdminImageEdit = { id: string; colorHex: string | null; altEs: string; altEn: string };
 
-export type AdminProduct = Omit<AdminProductInput, 'translations' | 'priceCents' | 'images' | 'colors'> & {
+export type AdminProduct = Omit<AdminProductInput, 'translations' | 'images' | 'colors' | 'variants'> & {
   id: string;
   translations: Record<Locale, ProductTranslationInput & { slug: string }>;
-  priceCents: number | null; // precio más bajo de las variantes; null = sin variantes
-  variants: number;
+  variants: AdminVariant[];
   images: AdminImage[];
   colors: (AdminColor & { variants: number })[]; // colores de las variantes (uno por hex), para agrupar fotos
   updatedAt: string;
@@ -133,6 +139,29 @@ export type AdminProduct = Omit<AdminProductInput, 'translations' | 'priceCents'
 export type AdminImageUpload = { r2Key: string; width: number; height: number };
 
 export type AdminCatalogOptions = { categories: { id: string; name: string }[]; series: { id: string; name: string }[] };
+
+// --- Categorías y series (RF-A06) ---
+// Árbol de 2 niveles: parentId null = categoría principal. Slug derivado del nombre, como en productos.
+export type AdminCategory = {
+  id: string;
+  parentId: string | null;
+  sort: number;
+  names: Record<Locale, string>;
+  slugs: Record<Locale, string>;
+  products: number;
+  children: number;
+};
+export type AdminCategoryInput = Pick<AdminCategory, 'parentId' | 'sort' | 'names'>;
+
+// Las 5 series de marca solo se editan: el código fija la letra del código de producto y su parche SVG.
+export type AdminSeries = {
+  id: string;
+  code: string;
+  sort: number;
+  translations: Record<Locale, { name: string; slug: string; description: string }>;
+  products: number;
+};
+export type AdminSeriesInput = { sort: number; translations: Record<Locale, { name: string; description: string }> };
 
 // --- Dashboard del admin (RF-A30) ---
 export type OrderStatus = 'PENDING_PAYMENT' | 'PAID' | 'NEEDS_REVIEW' | 'PREPARING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
@@ -147,4 +176,19 @@ export type AdminDashboard = {
 };
 
 // Códigos de error de guardado (409/422); la web los traduce.
-export type AdminSaveError = 'code_taken' | 'slug_taken' | 'invalid_category' | 'need_variant_price' | 'need_image_alt' | 'invalid_tech_specs' | 'color_taken' | 'color_in_use';
+export type AdminSaveError =
+  | 'code_taken'
+  | 'slug_taken'
+  | 'invalid_category'
+  | 'need_variant_price'
+  | 'need_image_alt'
+  | 'invalid_tech_specs'
+  | 'color_taken'
+  | 'color_in_use'
+  | 'sku_taken'
+  | 'size_taken' // misma talla dos veces en un color
+  | 'need_color_name' // variante de un color sin nombre ES/EN
+  | 'variant_in_use' // quitar una variante que ya está en órdenes
+  | 'product_in_use'
+  | 'category_in_use' // tiene productos o subcategorías
+  | 'category_depth'; // solo 2 niveles

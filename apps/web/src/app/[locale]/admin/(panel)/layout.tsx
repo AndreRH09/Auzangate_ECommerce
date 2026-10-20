@@ -20,7 +20,7 @@ export default async function AdminPanelLayout({ children, params }: LayoutProps
   const items = [
     { href: "/admin", label: t("dashboard"), icon: <ChartBar {...icon} /> },
     { href: "/admin/productos", label: t("products"), icon: <Package {...icon} /> },
-    { href: "/admin/categorias", label: t("catalogSetup"), icon: <FolderSimple {...icon} />, phase: "F1·4e" },
+    { href: "/admin/categorias", label: t("catalogSetup"), icon: <FolderSimple {...icon} /> },
     { href: "/admin/pedidos", label: t("orders"), icon: <ShoppingCart {...icon} />, phase: "F2" },
     { href: "/admin/ajustes", label: t("settings"), icon: <Gear {...icon} />, phase: "F2" },
   ];

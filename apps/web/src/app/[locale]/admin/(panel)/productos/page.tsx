@@ -1,4 +1,4 @@
-import { PencilSimple } from "@phosphor-icons/react/dist/ssr";
+import { PencilSimple, Plus } from "@phosphor-icons/react/dist/ssr";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
@@ -31,7 +31,12 @@ export default async function AdminProducts({ params, searchParams }: PageProps<
 
   return (
     <>
-      <h1 className="section-title">{t("products")}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="section-title">{t("products")}</h1>
+        <Link href="/admin/productos/nuevo" className="btn h-10 gap-2 bg-granito text-nieve hover:bg-pizarra">
+          <Plus size={16} aria-hidden /> {t("newProduct")}
+        </Link>
+      </div>
 
       <form className="mt-8 flex flex-wrap items-end gap-3">
         <input name="q" defaultValue={filters.q} placeholder={t("searchPlaceholder")} aria-label={t("search")} className={`${control} w-64`} />

@@ -3,7 +3,7 @@
 import { ArrowLeft, CaretLeft, CaretRight, Check, Plus, Star, Trash, UploadSimple, Warning, X } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { startTransition, useActionState, useRef, useState, useTransition } from "react";
-import { deleteColor, deleteImage, saveProduct, type SaveState, uploadImage } from "@/app/actions";
+import { deleteColor, deleteImage, deleteProduct, saveProduct, type SaveState, uploadImage } from "@/app/actions";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import type { AdminCatalogOptions, AdminImage, AdminProduct } from "@/lib/api";
@@ -12,9 +12,32 @@ import { slugify } from "@/lib/format";
 const LOCALES = ["es", "en"] as const;
 const STATUSES = ["DRAFT", "PUBLISHED", "ARCHIVED"] as const;
 const GENDERS = ["UNISEX", "MEN", "WOMEN"] as const;
-const KNOWN_ERRORS = ["code_taken", "slug_taken", "invalid_category", "need_variant_price", "need_image_alt", "invalid_tech_specs", "color_taken", "color_in_use", "image_type", "image_size"];
+export const KNOWN_ERRORS = [
+  "code_taken",
+  "slug_taken",
+  "invalid_category",
+  "need_variant_price",
+  "need_image_alt",
+  "invalid_tech_specs",
+  "color_taken",
+  "color_in_use",
+  "image_type",
+  "image_size",
+  "sku_taken",
+  "size_taken",
+  "need_color_name",
+  "variant_in_use",
+  "product_in_use",
+  "category_in_use",
+  "category_depth",
+];
+// tallas sugeridas (las del seed; U = talla única); cualquier otra se escribe a mano
+const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "U"];
+const rank = (size: string) => (SIZES.includes(size) ? SIZES.indexOf(size) : SIZES.length);
 
-const input = "mt-1 h-10 w-full rounded-md border border-linea bg-nieve px-3 text-sm focus:border-granito";
+// `field` sin ancho para los campos angostos (w-20, w-28…): con w-full en la misma clase, w-full gana
+const field = "mt-1 h-10 rounded-md border border-linea bg-nieve px-3 text-sm focus:border-granito";
+const input = `${field} w-full`;
 const area = "mt-1 w-full rounded-md border border-linea bg-nieve p-3 text-sm focus:border-granito";
 const label = "block text-xs text-pizarra";
 
@@ -52,6 +75,9 @@ export const MIN_PHOTOS = 3;
 
 // `from` = hex guardado en las variantes (solo grupos de variantes); nombre ES/EN se guarda en ProductVariant.colorName
 type Group = { key: string; hex: string; from?: string; nameEs?: string; nameEn?: string };
+// fila de la matriz color × talla; `group` = key del grupo de color (el hex puede cambiar al recolorear). Precio en soles, como se escribe
+type Row = { key: string; id?: string; group: string; size: string; sku: string; price: string; stock: string };
+const sortRows = (rows: Row[]) => [...rows].sort((a, b) => rank(a.size) - rank(b.size));
 
 // Selector de color: paleta + nativo + HEX libre.
 // Un color ya usado por otro grupo no se aplica (las fotos se agrupan por hex).
@@ -71,18 +97,43 @@ function ColorPicker({ hex, isTaken, onChange }: { hex: string; isTaken: (hex: s
         <button key={p} type="button" onClick={() => set(p)} aria-label={p} className={`size-7 rounded-full border border-linea ${p === hex ? "outline-2 outline-offset-2 outline-granito" : ""}`} style={{ background: p }} />
       ))}
       <input type="color" value={hex.toLowerCase()} onChange={(e) => set(e.target.value)} aria-label={t("colorCustom")} className="size-8 cursor-pointer rounded-full" />
-      <input value={text} onChange={(e) => set(e.target.value.trim())} maxLength={7} aria-label="HEX" aria-invalid={taken || !HEX.test(v)} className={`${input} data mt-0 w-28 uppercase aria-invalid:border-[#c4384a]`} />
+      <input value={text} onChange={(e) => set(e.target.value.trim())} maxLength={7} aria-label="HEX" aria-invalid={taken || !HEX.test(v)} className={`${field} data mt-0 w-28 uppercase aria-invalid:border-[#c4384a]`} />
       {taken && <span className="text-xs text-[#c4384a]">{t("colorTaken")}</span>}
     </div>
   );
 }
 
-// F1·5. Fotos agrupadas por variante de color (+ grupo "todos los colores" con colorHex null).
-// Subir y borrar es inmediato (R2 + API); alt, color y orden viajan con el formulario (inputs img.*) al guardar:
-// el orden del DOM (grupo general, luego cada color) es el orden de la galería.
-function ImagesPanel({ productId, initial, colors }: { productId: string; initial: AdminImage[]; colors: AdminProduct["colors"] }) {
+// RF-A04 + F1·5. Un grupo por color: nombre ES/EN, tallas (SKU, precio, stock) y fotos (+ grupo "todos los colores"
+// con colorHex null, solo fotos). Subir y borrar fotos es inmediato (R2 + API); tallas, alt, color y orden viajan
+// con el formulario (inputs var.* e img.*) al guardar: el orden del DOM (grupo general, luego cada color) es el orden de la galería.
+function ColorsPanel({
+  productId,
+  code,
+  initial,
+  colors,
+  variants,
+}: {
+  productId: string;
+  code: string;
+  initial: AdminImage[];
+  colors: AdminProduct["colors"];
+  variants: AdminProduct["variants"];
+}) {
   const t = useTranslations("Admin");
   const [images, setImages] = useState(initial);
+  const [rows, setRows] = useState<Row[]>(() =>
+    sortRows(variants.map((v) => ({ key: v.id, id: v.id, group: v.colorHex, size: v.size, sku: v.sku, price: (v.priceCents / 100).toFixed(2), stock: String(v.stock) }))),
+  );
+  const [bulk, setBulk] = useState({ price: "", stock: "" });
+  const rowsOf = (key: string) => rows.filter((r) => r.group === key);
+  const setRow = (key: string, patch: Partial<Row>) => setRows((cur) => cur.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  // SKU sugerido con la convención {código}-{inicial del color}-{talla} (AC04-C-M); se puede editar
+  const addSize = (g: Group, raw: string) => {
+    const size = raw.trim().toUpperCase();
+    if (!size || rowsOf(g.key).some((r) => r.size.toUpperCase() === size)) return;
+    const letter = (slugify(g.nameEs ?? "")[0] ?? "X").toUpperCase();
+    setRows((cur) => sortRows([...cur, { key: crypto.randomUUID(), group: g.key, size, sku: `${code}-${letter}-${size}`, price: cur[0]?.price ?? "", stock: "0" }]));
+  };
   // grupos = colores de variantes + colores ya usados en fotos sin variante; "" = todos los colores
   const [groups, setGroups] = useState<Group[]>(() => {
     const known = colors.map((c) => ({ key: c.hex, hex: c.hex, from: c.hex, nameEs: c.nameEs, nameEn: c.nameEn }));
@@ -166,6 +217,7 @@ function ImagesPanel({ productId, initial, colors }: { productId: string; initia
       if (!res.ok) return setErrors(res.errors.map((c) => (KNOWN_ERRORS.includes(c) ? t(`errors.${c}`) : c)));
       setImages((cur) => cur.filter((i) => (i.colorHex ?? "") !== g.hex));
       setGroups((cur) => cur.filter((x) => x.key !== g.key));
+      setRows((cur) => cur.filter((r) => r.group !== g.key));
     });
   };
   const pendingVariants = toDelete?.from ? (colors.find((c) => c.hex === toDelete.from)?.variants ?? 0) : 0;
@@ -174,13 +226,35 @@ function ImagesPanel({ productId, initial, colors }: { productId: string; initia
     <section className="mt-6 rounded-panel bg-nieve p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="data tracking-[0.2em] uppercase">{t("images")}</h2>
+          <h2 className="data tracking-[0.2em] uppercase">{t("variantsAndPhotos")}</h2>
           <p className="mt-1 text-xs text-pizarra">{t("imagesHint", { min: MIN_PHOTOS })}</p>
         </div>
         <button type="button" onClick={addGroup} className="btn h-10 gap-2 bg-granito text-nieve hover:bg-pizarra">
           <Plus size={16} aria-hidden /> {t("addColor")}
         </button>
       </div>
+
+      {/* edición masiva (RF-A04): pisa precio y/o stock de todas las tallas; se guarda con «Guardar». Sin name: no viaja */}
+      {rows.length > 0 && (
+        <div className="mt-6 flex flex-wrap items-end gap-3 rounded-md bg-glaciar p-4">
+          <label className={label}>
+            {t("price")} (S/)
+            <input type="number" min={0.01} max={100000} step={0.01} value={bulk.price} onChange={(e) => setBulk({ ...bulk, price: e.target.value })} className={`${field} data block w-32`} />
+          </label>
+          <label className={label}>
+            {t("stock")}
+            <input type="number" min={0} max={100000} step={1} value={bulk.stock} onChange={(e) => setBulk({ ...bulk, stock: e.target.value })} className={`${field} data block w-28`} />
+          </label>
+          <button
+            type="button"
+            disabled={!bulk.price && !bulk.stock}
+            onClick={() => setRows((cur) => cur.map((r) => ({ ...r, price: bulk.price || r.price, stock: bulk.stock || r.stock })))}
+            className="btn h-10 border border-granito disabled:opacity-40"
+          >
+            {t("applyAll", { count: rows.length })}
+          </button>
+        </div>
+      )}
 
       <div className="mt-6 space-y-4">
         {groups.map((g) => {
@@ -191,10 +265,11 @@ function ImagesPanel({ productId, initial, colors }: { productId: string; initia
           return (
             // acordeón nativo; `open` constante para que React no pise lo que el usuario abre o cierra
             <details key={g.key} open={opened.has(g.key)} className="group rounded-lg border border-linea shadow-xs">
-              {!general && <input type="hidden" name="group.color" value={g.hex} />}
-              {variant && (
+              {/* color.from: hex guardado en sus variantes; en un color nuevo, su propio hex (la API lo usa para nombrar las tallas nuevas) */}
+              {!general && (
                 <>
-                  <input type="hidden" name="color.from" value={g.from} />
+                  <input type="hidden" name="group.color" value={g.hex} />
+                  <input type="hidden" name="color.from" value={g.from ?? g.hex} />
                   <input type="hidden" name="color.hex" value={g.hex} />
                 </>
               )}
@@ -222,30 +297,104 @@ function ImagesPanel({ productId, initial, colors }: { productId: string; initia
                 {!general && (
                   <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                     <ColorPicker hex={g.hex} isTaken={(hex) => groups.some((x) => x.key !== g.key && x.hex === hex)} onChange={(hex) => recolor(g.key, hex)} />
-                    {/* el nombre vive en las variantes: un color nuevo lo recibe al crear sus variantes */}
-                    {variant ? (
-                      <div className="grid grid-cols-2 gap-2">
-                        <label className={label}>
-                          {t("colorName")} ES
-                          <input name="color.nameEs" lang="es" required maxLength={40} value={g.nameEs} onChange={(e) => edit(g.key, { nameEs: e.target.value })} className={input} />
-                        </label>
-                        <label className={label}>
-                          {t("colorName")} EN
-                          <input name="color.nameEn" lang="en" required maxLength={40} value={g.nameEn} onChange={(e) => edit(g.key, { nameEn: e.target.value })} className={input} />
-                        </label>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-pizarra">{t("colorNameLater")}</p>
-                    )}
-                    {/* sin nada guardado (color nuevo sin fotos) se quita sin preguntar; si no, confirma en el diálogo */}
+                    {/* el nombre vive en las variantes (ProductVariant.colorName): se guarda en todas las tallas del color */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className={label}>
+                        {t("colorName")} ES
+                        <input name="color.nameEs" lang="es" required maxLength={40} value={g.nameEs ?? ""} onChange={(e) => edit(g.key, { nameEs: e.target.value })} className={input} />
+                      </label>
+                      <label className={label}>
+                        {t("colorName")} EN
+                        <input name="color.nameEn" lang="en" required maxLength={40} value={g.nameEn ?? ""} onChange={(e) => edit(g.key, { nameEn: e.target.value })} className={input} />
+                      </label>
+                    </div>
+                    {/* sin nada guardado (color nuevo sin fotos; sus tallas aún no existen) se quita sin preguntar; si no, confirma en el diálogo */}
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() => (!variant && list.length === 0 ? setGroups(groups.filter((x) => x.key !== g.key)) : askDelete(g))}
+                      onClick={() => {
+                        if (variant || list.length > 0) return askDelete(g);
+                        setGroups(groups.filter((x) => x.key !== g.key));
+                        setRows(rows.filter((r) => r.group !== g.key));
+                      }}
                       className="inline-flex h-10 items-center gap-2 rounded-md border border-linea px-3 text-sm text-pizarra hover:border-[#c4384a] hover:text-[#c4384a] disabled:opacity-50"
                     >
                       <Trash size={14} aria-hidden /> {t("removeColor")}
                     </button>
+                  </div>
+                )}
+
+                {!general && (
+                  <div className="mb-6">
+                    <p className={label}>{t("sizes")}</p>
+                    {rowsOf(g.key).length > 0 && (
+                      <div className="mt-1 overflow-x-auto">
+                        <table className="w-full min-w-[560px] text-sm">
+                          <thead className="text-left text-xs text-pizarra">
+                            <tr>
+                              <th className="pb-1 font-normal">{t("size")}</th>
+                              <th className="pb-1 font-normal">SKU</th>
+                              <th className="pb-1 font-normal">{t("price")} (S/)</th>
+                              <th className="pb-1 font-normal">{t("stock")}</th>
+                              <th><span className="sr-only">{t("removeSize")}</span></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rowsOf(g.key).map((r) => (
+                              <tr key={r.key}>
+                                <td className="py-1 pr-2">
+                                  <input type="hidden" name="var.id" value={r.id ?? ""} />
+                                  <input type="hidden" name="var.color" value={g.hex} />
+                                  <input name="var.size" required maxLength={12} value={r.size} onChange={(e) => setRow(r.key, { size: e.target.value })} aria-label={t("size")} className={`${field} data mt-0 w-20 uppercase`} />
+                                </td>
+                                <td className="py-1 pr-2">
+                                  <input
+                                    name="var.sku"
+                                    required
+                                    pattern={"[A-Za-z0-9][A-Za-z0-9\\-]{2,39}"}
+                                    value={r.sku}
+                                    onChange={(e) => setRow(r.key, { sku: e.target.value })}
+                                    aria-label="SKU"
+                                    className={`${input} data mt-0 uppercase`}
+                                  />
+                                </td>
+                                <td className="py-1 pr-2">
+                                  <input name="var.price" type="number" inputMode="decimal" required min={0.01} max={100000} step={0.01} value={r.price} onChange={(e) => setRow(r.key, { price: e.target.value })} aria-label={t("price")} className={`${field} data mt-0 w-28`} />
+                                </td>
+                                <td className="py-1 pr-2">
+                                  <input name="var.stock" type="number" inputMode="numeric" required min={0} max={100000} step={1} value={r.stock} onChange={(e) => setRow(r.key, { stock: e.target.value })} aria-label={t("stock")} className={`${field} data mt-0 w-24`} />
+                                </td>
+                                <td className="py-1 text-right">
+                                  <button type="button" onClick={() => setRows(rows.filter((x) => x.key !== r.key))} aria-label={t("removeSize")} className="grid size-10 place-items-center rounded-md border border-linea text-pizarra hover:text-[#c4384a]">
+                                    <X size={14} aria-hidden />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {SIZES.filter((s) => !rowsOf(g.key).some((r) => r.size.toUpperCase() === s)).map((s) => (
+                        <button key={s} type="button" onClick={() => addSize(g, s)} className="data h-8 rounded-md border border-linea px-3 text-xs hover:border-granito">
+                          + {s}
+                        </button>
+                      ))}
+                      {/* Enter agrega la talla en vez de enviar el formulario */}
+                      <input
+                        maxLength={12}
+                        placeholder={t("otherSize")}
+                        aria-label={t("otherSize")}
+                        onKeyDown={(e) => {
+                          if (e.key !== "Enter") return;
+                          e.preventDefault();
+                          addSize(g, e.currentTarget.value);
+                          e.currentTarget.value = "";
+                        }}
+                        className={`${field} data mt-0 h-8 w-36 text-xs`}
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -357,12 +506,17 @@ export function ProductForm({ product: initial, options, locale }: { product: Ad
   const product = state?.ok ? state.product : initial;
   const [names, setNames] = useState({ es: initial.translations.es.name, en: initial.translations.en.name });
   const title = product.translations[locale].name || product.code;
+  const deleteDialog = useRef<HTMLDialogElement>(null);
+  const [deleting, startDelete] = useTransition();
+  const [deleteErrors, setDeleteErrors] = useState<string[] | null>(null);
+  const errors = deleteErrors ?? (state && !state.ok ? state.errors : null);
 
   return (
     <form
       key={product.updatedAt}
       onSubmit={(e) => {
         e.preventDefault();
+        setDeleteErrors(null);
         const data = new FormData(e.currentTarget);
         // regla de negocio: para publicar, cada variante de color necesita MIN_PHOTOS fotos (borradores, libres)
         const photoColors = data.getAll("img.color");
@@ -385,20 +539,7 @@ export function ProductForm({ product: initial, options, locale }: { product: Ad
         )}
       </div>
 
-      <section className="mt-8 grid gap-4 rounded-panel bg-nieve p-6 sm:grid-cols-2 lg:grid-cols-6">
-        {/* precio único del producto: se aplica a todas sus variantes; sin variantes no hay dónde guardarlo */}
-        <label className={label}>
-          {t("price")}
-          <span className="relative block">
-            <span className="data pointer-events-none absolute top-1/2 left-3 mt-0.5 -translate-y-1/2 text-sm text-pizarra">S/</span>
-            {product.priceCents === null ? (
-              <input disabled placeholder="—" aria-describedby="price-hint" className={`${input} data pl-9 disabled:opacity-60`} />
-            ) : (
-              <input name="price" type="number" inputMode="decimal" required min={0.01} max={100000} step={0.01} defaultValue={(product.priceCents / 100).toFixed(2)} className={`${input} data pl-9`} />
-            )}
-          </span>
-          {product.priceCents === null && <span id="price-hint" className="mt-1 block">{t("priceNoVariants")}</span>}
-        </label>
+      <section className="mt-8 grid gap-4 rounded-panel bg-nieve p-6 sm:grid-cols-2 lg:grid-cols-5">
         <label className={label}>
           {t("code")}
           <input name="code" required defaultValue={product.code} className={`${input} data uppercase`} />
@@ -460,12 +601,17 @@ export function ProductForm({ product: initial, options, locale }: { product: Ad
         })}
       </div>
 
-      <ImagesPanel productId={product.id} initial={product.images} colors={product.colors} />
-
-      <p className="mt-6 text-sm text-pizarra">{t("variantsNote", { variants: product.variants })}</p>
+      <ColorsPanel productId={product.id} code={product.code} initial={product.images} colors={product.colors} variants={product.variants} />
 
       <div className="fixed inset-x-0 bottom-0 border-t border-linea bg-nieve/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1600px] items-center justify-end gap-4 px-4 py-3 md:px-8">
+          <button
+            type="button"
+            onClick={() => deleteDialog.current?.showModal()}
+            className="mr-auto inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm text-pizarra hover:text-[#c4384a]"
+          >
+            <Trash size={14} aria-hidden /> {t("deleteProduct")}
+          </button>
           <div role="status" aria-live="polite" className="text-sm">
             {missing.length > 0 && (
               <p className="text-[#c4384a]">{t("needPhotos", { min: MIN_PHOTOS, colors: missing.join(", ").toUpperCase() })}</p>
@@ -473,9 +619,9 @@ export function ProductForm({ product: initial, options, locale }: { product: Ad
             {missing.length === 0 && state?.ok && !pending && (
               <span className="flex items-center gap-2"><Check size={16} aria-hidden /> {t("saved")}</span>
             )}
-            {missing.length === 0 && state && !state.ok && (
+            {missing.length === 0 && errors && (
               <ul className="text-[#c4384a]">
-                {state.errors.map((e) => <li key={e}>{KNOWN_ERRORS.includes(e) ? t(`errors.${e}`) : e}</li>)}
+                {errors.map((e) => <li key={e}>{KNOWN_ERRORS.includes(e) ? t(`errors.${e}`) : e}</li>)}
               </ul>
             )}
           </div>
@@ -484,6 +630,31 @@ export function ProductForm({ product: initial, options, locale }: { product: Ad
           </button>
         </div>
       </div>
+
+      {/* confirmación nativa; al confirmar, la action borra (API + R2) y vuelve al listado */}
+      <dialog ref={deleteDialog} aria-labelledby="delete-product-title" className="m-auto w-[min(92vw,28rem)] rounded-panel border border-linea bg-nieve p-6 text-granito backdrop:bg-granito/40">
+        <h2 id="delete-product-title" className="text-lg font-semibold">{t("deleteProductTitle", { name: title })}</h2>
+        <p className="mt-3 text-sm text-pizarra">{t("deleteProductBody")}</p>
+        <div className="mt-6 flex justify-end gap-2">
+          <button type="button" autoFocus onClick={() => deleteDialog.current?.close()} className="btn h-10 border border-granito">
+            {t("cancel")}
+          </button>
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={() =>
+              startDelete(async () => {
+                const res = await deleteProduct(product.id);
+                deleteDialog.current?.close();
+                if (res) setDeleteErrors(res.errors);
+              })
+            }
+            className="btn h-10 bg-[#c4384a] text-nieve hover:bg-[#a52f3e] disabled:opacity-60"
+          >
+            {deleting ? t("deleting") : t("deleteProduct")}
+          </button>
+        </div>
+      </dialog>
     </form>
   );
 }

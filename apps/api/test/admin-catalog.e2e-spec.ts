@@ -95,13 +95,42 @@ describe('Admin de catálogo (e2e)', () => {
       await put(original.id, { ...input(() => {}), translations: original.translations }).expect(400);
     });
 
-    it('precio: se aplica a todas las variantes', async () => {
-      const { body } = await put(original.id, { ...input(() => {}), priceCents: 18_990 }).expect(200);
-      expect(body.priceCents).toBe(18_990);
-      const variants = await app.get(PrismaService).productVariant.findMany({ where: { productId: original.id }, select: { priceCents: true } });
-      expect(new Set(variants.map((v) => v.priceCents))).toEqual(new Set([18_990]));
-      await put(original.id, { ...input(() => {}), priceCents: original.priceCents! }).expect(200);
-      await put(original.id, { ...input(() => {}), priceCents: 0 }).expect(400);
+    it('alta en borrador, variantes (crear, editar, quitar) y baja', async () => {
+      const auth = (r: request.Test) => r.set('authorization', `Bearer ${token}`);
+      const create = { code: 'AN96', gender: 'UNISEX', categoryId: original.categoryId, seriesId: null, names: { es: 'Temporal AN96', en: 'Temp AN96' } };
+      const created = (await auth(request(app.getHttpServer()).post('/v1/admin/products')).send(create).expect(201)).body as AdminProduct;
+      try {
+        expect(created).toMatchObject({ code: 'AN96', status: 'DRAFT', variants: [], translations: { es: { slug: 'temporal-an96' }, en: { slug: 'temp-an96' } } });
+        expect((await auth(request(app.getHttpServer()).post('/v1/admin/products')).send(create).expect(409)).body.message).toEqual(['code_taken']);
+
+        const t = { name: 'Temporal AN96', subtitle: '', description: '', techSpecs: {} };
+        const base = { ...input(() => {}), code: 'AN96', status: 'DRAFT', translations: { es: t, en: { ...t, name: 'Temp AN96' } } };
+        const black = { from: '#111111', hex: '#111111', nameEs: 'Negro', nameEn: 'Black' };
+        const row = (size: string, extra: object = {}) => ({ colorHex: '#111111', size, sku: `AN96-N-${size}`, priceCents: 10_000, stock: 2, ...extra });
+
+        const first = (await put(created.id, { ...base, colors: [black], variants: [row('S'), row('M')] }).expect(200)).body as AdminProduct;
+        expect(first.variants.map((v) => [v.sku, v.priceCents, v.stock])).toEqual([['AN96-N-M', 10_000, 2], ['AN96-N-S', 10_000, 2]]);
+        expect(first.colors).toEqual([{ hex: '#111111', nameEs: 'Negro', nameEn: 'Black', variants: 2 }]);
+
+        // S se edita por id, M no viene (se borra), L es nueva; el nombre del color se conserva sin mandar colors
+        const s = first.variants.find((v) => v.size === 'S')!;
+        const second = (await put(created.id, { ...base, variants: [row('S', { id: s.id, priceCents: 12_500, stock: 7 }), row('L')] }).expect(200)).body as AdminProduct;
+        expect(second.variants.map((v) => [v.sku, v.priceCents, v.stock])).toEqual([['AN96-N-L', 10_000, 2], ['AN96-N-S', 12_500, 7]]);
+        expect(second.variants.find((v) => v.size === 'S')!.id).toBe(s.id);
+
+        const code = async (body: object, status: number) => (await put(created.id, { ...base, ...body }).expect(status)).body.message;
+        expect(await code({ variants: [row('S'), row('S', { sku: 'AN96-N-S2' })] }, 409)).toEqual(['size_taken']);
+        expect(await code({ variants: [row('S'), row('M', { sku: 'AN96-N-S' })] }, 409)).toEqual(['sku_taken']);
+        expect(await code({ variants: [row('S', { sku: original.variants[0]!.sku })] }, 409)).toEqual(['sku_taken']); // SKU de otro producto
+        expect(await code({ variants: [row('S', { colorHex: '#222222' })] }, 400)).toEqual(['need_color_name']);
+        await put(created.id, { ...base, variants: [row('S', { priceCents: 0 })] }).expect(400);
+        expect((await detail(created.id)).variants).toHaveLength(2); // los rechazos no dejaron nada a medias
+
+        expect((await auth(request(app.getHttpServer()).delete(`/v1/admin/products/${created.id}`)).expect(200)).body).toEqual({ r2Keys: [] });
+        await auth(request(app.getHttpServer()).get(`/v1/admin/products/${created.id}`)).expect(404);
+      } finally {
+        await app.get(PrismaService).product.deleteMany({ where: { id: created.id } });
+      }
     });
 
     it('código o nombre (slug) repetido: 409 con el código de error', async () => {
