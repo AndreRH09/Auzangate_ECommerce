@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import type { Locale } from "@/i18n/routing";
 import { ADMIN_COOKIE, AdminApiError, adminApi, getAdmin } from "@/lib/admin";
-import { type AdminImage, type AdminProduct, type AdminProductInput, API_URL, type LoginResponse } from "@/lib/api";
+import { type AdminColorDelete, type AdminImage, type AdminProduct, type AdminProductInput, API_URL, type LoginResponse } from "@/lib/api";
 
 // BFF: el navegador nunca llama a la API directo (plan §1)
 export async function subscribe(_: unknown, form: FormData): Promise<"ok" | "error"> {
@@ -57,7 +57,6 @@ export async function saveProduct(id: string, _: SaveState, form: FormData): Pro
   const text = (name: string) => String(form.get(name) ?? "");
   const translation = (l: Locale) => ({
     name: text(`${l}.name`),
-    slug: text(`${l}.slug`).trim() || undefined,
     subtitle: text(`${l}.subtitle`),
     description: text(`${l}.description`),
     techSpecs: parseSpecs(form, l),
@@ -68,7 +67,9 @@ export async function saveProduct(id: string, _: SaveState, form: FormData): Pro
     gender: text("gender") as AdminProductInput["gender"],
     categoryId: text("categoryId"),
     seriesId: text("seriesId") || null,
-    translations: { es: translation("es"), en: translation("en") } as AdminProductInput["translations"],
+    translations: { es: translation("es"), en: translation("en") },
+    // soles con 2 decimales -> céntimos; sin campo (producto sin variantes) no se toca
+    priceCents: form.has("price") ? Math.round(Number(text("price")) * 100) : undefined,
     // fotos: inputs repetidos img.* en el orden de la galería
     images: form.getAll("img.id").map((imgId, i) => ({
       id: String(imgId),
@@ -130,6 +131,20 @@ export async function deleteImage(productId: string, imageId: string) {
   // las fotos del seed son rutas del front o URLs externas, no están en R2
   if (r2Key.startsWith("products/")) await (await getCloudflareContext({ async: true })).env.MEDIA.delete(r2Key);
   updateTag("catalog"); // la tienda no debe seguir apuntando al archivo borrado
+}
+
+// Borra un color: variantes + fotos en la API (una transacción) y después sus archivos de R2.
+export async function deleteColor(productId: string, body: AdminColorDelete): Promise<{ ok: true } | { ok: false; errors: string[] }> {
+  try {
+    const { r2Keys } = await adminApi<{ r2Keys: string[] }>(`/products/${encodeURIComponent(productId)}/colors`, { method: "DELETE", body: JSON.stringify(body) });
+    const { env } = await getCloudflareContext({ async: true });
+    await Promise.all(r2Keys.filter((k) => k.startsWith("products/")).map((k) => env.MEDIA.delete(k)));
+    updateTag("catalog");
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof AdminApiError) return { ok: false, errors: e.messages };
+    throw e;
+  }
 }
 
 export async function logout() {

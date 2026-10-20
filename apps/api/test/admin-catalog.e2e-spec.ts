@@ -63,8 +63,12 @@ describe('Admin de catálogo (e2e)', () => {
     });
     // deja el seed como estaba aunque un test falle a la mitad
     // cuerpo del PUT: solo los campos editables
+    const noSlug = ({ es, en }: AdminProduct['translations']) => {
+      const strip = ({ name, subtitle, description, techSpecs }: AdminProduct['translations']['es']) => ({ name, subtitle, description, techSpecs });
+      return { es: strip(es), en: strip(en) };
+    };
     const toInput = ({ code, status, gender, categoryId, seriesId, translations }: AdminProduct) =>
-      ({ code, status, gender, categoryId, seriesId, translations }) satisfies AdminProductInput;
+      ({ code, status, gender, categoryId, seriesId, translations: noSlug(translations) }) satisfies AdminProductInput;
     afterAll(async () => {
       await put(original.id, toInput(original)).expect(200);
     });
@@ -75,20 +79,32 @@ describe('Admin de catálogo (e2e)', () => {
       return toInput(p);
     };
 
-    it('guarda, genera el slug vacío y la tienda lo refleja', async () => {
+    it('guarda, deriva el slug del nombre de cada idioma y la tienda lo refleja', async () => {
       const { body } = await put(original.id, input((p) => {
         p.translations.es.subtitle = 'Merino editado';
-        p.translations.es.slug = '';
+        p.translations.en.name = 'Base Layer AC03 Pro';
         p.translations.es.techSpecs = { peso: '150 g' };
       })).expect(200);
       expect(body.translations.es).toMatchObject({ slug: 'primera-capa-ac03', subtitle: 'Merino editado', techSpecs: { peso: '150 g' } });
+      expect(body.translations.en.slug).toBe('base-layer-ac03-pro');
       const shop = await request(app.getHttpServer()).get('/v1/products/primera-capa-ac03?locale=es').expect(200);
       expect(shop.body.subtitle).toBe('Merino editado');
+      // el slug ya no se manda: un campo de más es 400
+      await put(original.id, { ...input(() => {}), translations: original.translations }).expect(400);
     });
 
-    it('código o slug repetido: 409 con el código de error', async () => {
+    it('precio: se aplica a todas las variantes', async () => {
+      const { body } = await put(original.id, { ...input(() => {}), priceCents: 18_990 }).expect(200);
+      expect(body.priceCents).toBe(18_990);
+      const variants = await app.get(PrismaService).productVariant.findMany({ where: { productId: original.id }, select: { priceCents: true } });
+      expect(new Set(variants.map((v) => v.priceCents))).toEqual(new Set([18_990]));
+      await put(original.id, { ...input(() => {}), priceCents: original.priceCents! }).expect(200);
+      await put(original.id, { ...input(() => {}), priceCents: 0 }).expect(400);
+    });
+
+    it('código o nombre (slug) repetido: 409 con el código de error', async () => {
       expect((await put(original.id, input((p) => (p.code = 'AW01'))).expect(409)).body.message).toEqual(['code_taken']);
-      expect((await put(original.id, input((p) => (p.translations.es.slug = 'casaca-aw01'))).expect(409)).body.message).toEqual(['slug_taken']);
+      expect((await put(original.id, input((p) => (p.translations.es.name = 'Casaca AW01'))).expect(409)).body.message).toEqual(['slug_taken']);
     });
 
     it('valida formato de código, techSpecs y categoría', async () => {
@@ -108,7 +124,7 @@ describe('Admin de catálogo (e2e)', () => {
         },
       });
       try {
-        const res = await put(temp.id, { ...input(() => {}), code: 'AN99', status: 'PUBLISHED', translations: { es: { ...t, slug: 'temporal-an99' }, en: { ...t, slug: 'temp-an99' } } }).expect(422);
+        const res = await put(temp.id, { ...input(() => {}), code: 'AN99', status: 'PUBLISHED', translations: { es: t, en: { ...t, name: 'Temp AN99' } } }).expect(422);
         expect(res.body.message).toEqual(['need_variant_price', 'need_image_alt']);
       } finally {
         await prisma.product.delete({ where: { id: temp.id } });
@@ -127,7 +143,7 @@ describe('Admin de catálogo (e2e)', () => {
         ...input(() => {}),
         code: 'AN98',
         status,
-        translations: { es: { ...t, slug: 'temporal-an98' }, en: { ...t, slug: 'temp-an98' } },
+        translations: { es: t, en: { ...t, name: 'Temp AN98' } },
         images: [{ id: imageId, colorHex: '#AABBCC', altEs: alt, altEn: alt }],
       });
       try {
@@ -145,6 +161,36 @@ describe('Admin de catálogo (e2e)', () => {
         const del = await auth(request(app.getHttpServer()).delete(`/v1/admin/products/${temp.id}/images/${img.id}`)).expect(200);
         expect(del.body).toEqual({ r2Key });
         expect((await detail(temp.id)).images).toEqual([]);
+      } finally {
+        await prisma.product.delete({ where: { id: temp.id } });
+      }
+    });
+
+    it('borrar color: sus variantes y fotos (también las sin color guardado), el resto queda', async () => {
+      const prisma = app.get(PrismaService);
+      const t = { name: 'Temporal AN97', subtitle: '', description: '', techSpecs: {} };
+      const variant = (hex: string, size: string) => ({ sku: `AN97-${hex.slice(1)}-${size}`, colorHex: hex, colorName: { es: hex, en: hex }, size, priceCents: 100 });
+      const image = (colorHex: string | null, n: number) => ({ r2Key: `products/x/${n}.webp`, colorHex, altEs: '', altEn: '', width: 1, height: 1 });
+      const temp = await prisma.product.create({
+        data: {
+          code: 'AN97',
+          categoryId: original.categoryId,
+          translations: { create: [{ locale: 'es', slug: 'temporal-an97', ...t }, { locale: 'en', slug: 'temp-an97', ...t }] },
+          variants: { create: [variant('#111111', 'S'), variant('#111111', 'M'), variant('#222222', 'S')] },
+          images: { create: [image('#111111', 1), image(null, 2), image('#222222', 3)] },
+        },
+        include: { images: true },
+      });
+      const del = (body: object) =>
+        request(app.getHttpServer()).delete(`/v1/admin/products/${temp.id}/colors`).set('authorization', `Bearer ${token}`).send(body);
+      try {
+        const unsaved = temp.images.find((i) => !i.colorHex)!; // subida al grupo del color pero aún sin guardar
+        const { body } = await del({ hex: '#111111', imageIds: [unsaved.id] }).expect(200);
+        expect(body.r2Keys.sort()).toEqual(['products/x/1.webp', 'products/x/2.webp']);
+        const left = await detail(temp.id);
+        expect(left.colors.map((c) => [c.hex, c.variants])).toEqual([['#222222', 1]]);
+        expect(left.images.map((i) => i.colorHex)).toEqual(['#222222']);
+        await del({ hex: 'rojo', imageIds: [] }).expect(400);
       } finally {
         await prisma.product.delete({ where: { id: temp.id } });
       }

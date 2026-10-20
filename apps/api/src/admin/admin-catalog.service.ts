@@ -2,11 +2,11 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException, 
 import { ConfigService } from '@nestjs/config';
 import { toImageUrl } from '../catalog/catalog.service.js';
 import type { Env } from '../config/env.js';
-import type { AdminCatalogOptions, AdminProduct, AdminProductList, AdminSaveError, Locale, ProductTranslationInput } from '../contract.js';
+import type { AdminCatalogOptions, AdminProduct, AdminProductList, AdminSaveError, Locale } from '../contract.js';
 import { Prisma, ProductStatus } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { slugify } from '../slugify.js';
-import type { AddImageDto, AdminProductsQuery, SaveProductDto } from './admin-catalog.dto.js';
+import type { AddImageDto, AdminProductsQuery, DeleteColorDto, SaveProductDto } from './admin-catalog.dto.js';
 
 const PAGE_SIZE = 25;
 const LOCALES = ['es', 'en'] as const satisfies Locale[];
@@ -100,10 +100,10 @@ export class AdminCatalogService {
   async product(id: string): Promise<AdminProduct> {
     const p = await this.prisma.product.findUnique({
       where: { id },
-      include: { translations: true, images: { orderBy: { sort: 'asc' } }, variants: { select: { colorHex: true, colorName: true } } },
+      include: { translations: true, images: { orderBy: { sort: 'asc' } }, variants: { select: { colorHex: true, colorName: true, priceCents: true } } },
     });
     if (!p) throw new NotFoundException();
-    const empty: ProductTranslationInput = { name: '', slug: '', subtitle: '', description: '', techSpecs: {} };
+    const empty = { name: '', slug: '', subtitle: '', description: '', techSpecs: {} };
     const t = (locale: Locale) => {
       const row = p.translations.find((r) => r.locale === locale);
       return row ? { name: row.name, slug: row.slug, subtitle: row.subtitle, description: row.description, techSpecs: row.techSpecs as Record<string, string> } : empty;
@@ -116,10 +116,16 @@ export class AdminCatalogService {
       categoryId: p.categoryId,
       seriesId: p.seriesId,
       translations: { es: t('es'), en: t('en') },
+      priceCents: p.variants.length ? Math.min(...p.variants.map((v) => v.priceCents)) : null,
       variants: p.variants.length,
       images: p.images.map((i) => ({ id: i.id, url: toImageUrl(i.r2Key, this.imageBase), colorHex: i.colorHex, altEs: i.altEs, altEn: i.altEn, width: i.width, height: i.height })),
       // un color por hex (las tallas lo repiten)
-      colors: [...new Map(p.variants.map((v) => [v.colorHex, v.colorName as Record<Locale, string>])).entries()].map(([hex, n]) => ({ hex, nameEs: n.es, nameEn: n.en })),
+      colors: [...new Map(p.variants.map((v) => [v.colorHex, v.colorName as Record<Locale, string>])).entries()].map(([hex, n]) => ({
+        hex,
+        nameEs: n.es,
+        nameEn: n.en,
+        variants: p.variants.filter((v) => v.colorHex === hex).length,
+      })),
       updatedAt: p.updatedAt.toISOString(),
     };
   }
@@ -137,6 +143,25 @@ export class AdminCatalogService {
     return this.product(id);
   }
 
+  /** borra las variantes del color y sus fotos en una transacción; devuelve las claves para que la web limpie R2 */
+  async deleteColor(id: string, { hex, imageIds }: DeleteColorDto): Promise<{ r2Keys: string[] }> {
+    if (!(await this.prisma.product.count({ where: { id } }))) throw new NotFoundException();
+    const colorHex = hex?.toUpperCase();
+    const images = { productId: id, OR: [{ id: { in: imageIds } }, ...(colorHex ? [{ colorHex }] : [])] };
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const rows = await tx.productImage.findMany({ where: images, select: { r2Key: true } });
+        await tx.productImage.deleteMany({ where: images });
+        if (colorHex) await tx.productVariant.deleteMany({ where: { productId: id, colorHex } });
+        return { r2Keys: rows.map((r) => r.r2Key) };
+      });
+    } catch (e) {
+      // P2003: alguna variante ya está en una orden (OrderItem no borra en cascada)
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') throw fail(ConflictException, 'color_in_use');
+      throw e;
+    }
+  }
+
   /** devuelve la clave para que la web borre el archivo de R2 */
   async deleteImage(id: string, imageId: string): Promise<{ r2Key: string }> {
     const img = await this.prisma.productImage.findFirst({ where: { id: imageId, productId: id }, select: { r2Key: true } });
@@ -152,9 +177,10 @@ export class AdminCatalogService {
     const colors = (dto.colors ?? []).map((c) => ({ from: c.from.toUpperCase(), hex: c.hex.toUpperCase(), nameEs: c.nameEs, nameEn: c.nameEn }));
     if (new Set(colors.map((c) => c.hex)).size < colors.length) throw fail(ConflictException, 'color_taken');
 
+    // slug siempre derivado del nombre de su idioma (no se edita a mano)
     const translation = (locale: Locale) => {
-      const { name, slug, subtitle, description, techSpecs } = dto.translations[locale];
-      return { name: name.trim(), slug: slug || slugify(name), subtitle, description, techSpecs };
+      const { name, subtitle, description, techSpecs } = dto.translations[locale];
+      return { name: name.trim(), slug: slugify(name), subtitle, description, techSpecs };
     };
     // Una transacción: si la validación de publicación falla, tampoco quedan guardados los cambios de fotos.
     try {
@@ -166,6 +192,9 @@ export class AdminCatalogService {
             data: { colorHex: c.hex, colorName: { es: c.nameEs.trim(), en: c.nameEn.trim() } },
           });
         }
+
+        // ponytail: un precio por producto (todas sus variantes); precio por talla/color llega con el editor de variantes (F1·4d)
+        if (dto.priceCents !== undefined) await tx.productVariant.updateMany({ where: { productId: id }, data: { priceCents: dto.priceCents } });
 
         // updateMany con productId: ignora ids ajenos o ya borrados. colorHex tal cual: la galería lo compara como texto con ProductVariant.colorHex
         for (const [sort, img] of (dto.images ?? []).entries()) {

@@ -86,15 +86,15 @@ export type AdminProductRow = {
 
 export type AdminProductList = { total: number; page: number; pageSize: number; items: AdminProductRow[] };
 
+// El slug no se edita: la API lo genera siempre del nombre (slugify) y lo devuelve en AdminProduct.
 export type ProductTranslationInput = {
   name: string;
-  slug: string;
   subtitle: string;
   description: string;
   techSpecs: Record<string, string>;
 };
 
-// Lo que el formulario edita (GET y cuerpo del PUT; en el PUT el slug puede ir vacío y se genera del nombre).
+// Cuerpo del PUT del formulario.
 export type AdminProductInput = {
   code: string;
   status: ProductStatus;
@@ -102,13 +102,17 @@ export type AdminProductInput = {
   categoryId: string;
   seriesId: string | null;
   translations: Record<Locale, ProductTranslationInput>;
-  images?: AdminImageEdit[]; // solo en el PUT; omitido = no se tocan las fotos
-  colors?: AdminColorEdit[]; // solo en el PUT; renombra/recolorea las variantes de cada color
+  priceCents?: number; // precio de todas las variantes; omitido = no se toca
+  images?: AdminImageEdit[]; // omitido = no se tocan las fotos
+  colors?: AdminColorEdit[]; // renombra/recolorea las variantes de cada color
 };
 
 // Color de las variantes en el admin: `from` = hex actual (identifica el grupo de variantes).
 export type AdminColor = { hex: string; nameEs: string; nameEn: string };
 export type AdminColorEdit = AdminColor & { from: string };
+
+// Borra un color: sus variantes (por hex guardado) y sus fotos (por id, incluye las aún sin color guardado).
+export type AdminColorDelete = { hex: string | null; imageIds: string[] };
 
 // Foto en el admin: r2Key es la clave en el bucket (o una ruta/URL de las fotos del seed).
 export type AdminImage = { id: string; url: string; colorHex: string | null; altEs: string; altEn: string; width: number; height: number };
@@ -116,11 +120,13 @@ export type AdminImage = { id: string; url: string; colorHex: string | null; alt
 // Lo editable de cada foto desde el formulario; el orden del arreglo es el orden de la galería.
 export type AdminImageEdit = { id: string; colorHex: string | null; altEs: string; altEn: string };
 
-export type AdminProduct = Omit<AdminProductInput, 'images' | 'colors'> & {
+export type AdminProduct = Omit<AdminProductInput, 'translations' | 'priceCents' | 'images' | 'colors'> & {
   id: string;
+  translations: Record<Locale, ProductTranslationInput & { slug: string }>;
+  priceCents: number | null; // precio más bajo de las variantes; null = sin variantes
   variants: number;
   images: AdminImage[];
-  colors: AdminColor[]; // colores de las variantes (uno por hex), para agrupar fotos
+  colors: (AdminColor & { variants: number })[]; // colores de las variantes (uno por hex), para agrupar fotos
   updatedAt: string;
 };
 
@@ -129,4 +135,4 @@ export type AdminImageUpload = { r2Key: string; width: number; height: number };
 export type AdminCatalogOptions = { categories: { id: string; name: string }[]; series: { id: string; name: string }[] };
 
 // Códigos de error de guardado (409/422); la web los traduce.
-export type AdminSaveError = 'code_taken' | 'slug_taken' | 'invalid_category' | 'need_variant_price' | 'need_image_alt' | 'invalid_tech_specs' | 'color_taken';
+export type AdminSaveError = 'code_taken' | 'slug_taken' | 'invalid_category' | 'need_variant_price' | 'need_image_alt' | 'invalid_tech_specs' | 'color_taken' | 'color_in_use';

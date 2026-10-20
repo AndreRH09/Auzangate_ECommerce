@@ -148,7 +148,7 @@
     "noSeries": "No series",
     "name": "Name",
     "slug": "Slug (URL)",
-    "slugAuto": "Generated from the name",
+    "slugAuto": "Generated from the name on save.",
     "subtitle": "Technical subtitle",
     "description": "Description",
     "techSpecs": "Tech specs",
@@ -164,7 +164,7 @@
     "newColor": "New color",
     "colorCustom": "Custom color",
     "colorTaken": "That color already has a group",
-    "removeColor": "Remove color",
+    "removeColor": "Delete color",
     "colorName": "Name",
     "colorNameLater": "The name is set when this color's variants are created.",
     "catalogCover": "Catalog cover",
@@ -192,7 +192,14 @@
       "invalid_tech_specs": "Invalid tech specs: up to 30 properties, names up to 40 and values up to 200 characters.",
       "color_taken": "Two colors can't share the same HEX (to swap them, save in two steps).",
       "image_type": "unsupported format (JPG, PNG, WebP or AVIF).",
-      "image_size": "is larger than 8 MB."
-    }
+      "image_size": "is larger than 8 MB.",
+      "color_in_use": "Can't delete: there are orders with variants of this color."
+    },
+    "price": "Price",
+    "priceNoVariants": "Set when variants are created.",
+    "cancel": "Cancel",
+    "deleteColorTitle": "Delete color {name}?",
+    "deleteColorBody": "This deletes {variants, plural, =0 {its data} one {# variant (size, price and stock)} other {# variants (sizes, price and stock)}} and {photos, plural, =0 {no photos} one {# photo} other {# photos}} of this color, also from storage. This cannot be undone.",
+    "deleteColorConfirm": "Delete color"
   }
 }

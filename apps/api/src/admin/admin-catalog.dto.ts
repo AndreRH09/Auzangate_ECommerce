@@ -33,12 +33,9 @@ export class AdminProductsQuery extends LocaleQuery {
 }
 
 class TranslationDto {
-  @IsString() @Length(1, 120)
+  /** el slug se genera de aquí (slugify); debe dejar al menos una letra o número */
+  @IsString() @Length(1, 120) @Matches(/[\p{L}\p{N}]/u)
   name: string;
-
-  /** vacío u omitido = se genera del nombre */
-  @IsOptional() @Matches(/^([a-z0-9]+(-[a-z0-9]+)*)?$/, { message: 'slug: solo minúsculas, números y guiones' }) @MaxLength(140)
-  slug?: string;
 
   @IsString() @MaxLength(160)
   subtitle: string;
@@ -117,6 +114,20 @@ export class SaveProductDto {
 
   @IsOptional() @IsArray() @ArrayMaxSize(20) @ValidateNested({ each: true }) @Type(() => ColorEditDto)
   colors?: ColorEditDto[];
+
+  /** céntimos; se aplica a todas las variantes */
+  @IsOptional() @IsInt() @Min(1) @Max(10_000_000)
+  priceCents?: number;
+}
+
+// Borrar un color: variantes con ese hex + fotos por id (las recién subidas aún no tienen color guardado).
+export class DeleteColorDto {
+  /** null = solo fotos (color sin variantes) */
+  @IsOptional() @Matches(/^#[0-9a-f]{6}$/i)
+  hex: string | null;
+
+  @IsArray() @ArrayMaxSize(100) @IsString({ each: true }) @MaxLength(30, { each: true })
+  imageIds: string[];
 }
 
 // F1·5: la web lo registra después de subir el archivo a R2 (prefijo products/{productId}/).

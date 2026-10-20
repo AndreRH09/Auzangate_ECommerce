@@ -2,16 +2,17 @@
 
 import { ArrowLeft, CaretLeft, CaretRight, Check, Plus, Star, Trash, UploadSimple, Warning, X } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
-import { startTransition, useActionState, useState, useTransition } from "react";
-import { deleteImage, saveProduct, type SaveState, uploadImage } from "@/app/actions";
+import { startTransition, useActionState, useRef, useState, useTransition } from "react";
+import { deleteColor, deleteImage, saveProduct, type SaveState, uploadImage } from "@/app/actions";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import type { AdminCatalogOptions, AdminImage, AdminProduct } from "@/lib/api";
+import { slugify } from "@/lib/format";
 
 const LOCALES = ["es", "en"] as const;
 const STATUSES = ["DRAFT", "PUBLISHED", "ARCHIVED"] as const;
 const GENDERS = ["UNISEX", "MEN", "WOMEN"] as const;
-const KNOWN_ERRORS = ["code_taken", "slug_taken", "invalid_category", "need_variant_price", "need_image_alt", "invalid_tech_specs", "color_taken", "image_type", "image_size"];
+const KNOWN_ERRORS = ["code_taken", "slug_taken", "invalid_category", "need_variant_price", "need_image_alt", "invalid_tech_specs", "color_taken", "color_in_use", "image_type", "image_size"];
 
 const input = "mt-1 h-10 w-full rounded-md border border-linea bg-nieve px-3 text-sm focus:border-granito";
 const area = "mt-1 w-full rounded-md border border-linea bg-nieve p-3 text-sm focus:border-granito";
@@ -149,6 +150,26 @@ function ImagesPanel({ productId, initial, colors }: { productId: string; initia
     setGroups([...groups, { key, hex }]);
   };
 
+  // Eliminar color: diálogo modal nativo de confirmación; recién al confirmar se borra en la API y R2.
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [toDelete, setToDelete] = useState<Group | null>(null);
+  const askDelete = (g: Group) => {
+    setErrors([]);
+    setToDelete(g);
+    dialog.current?.showModal();
+  };
+  const confirmDelete = () => {
+    const g = toDelete!;
+    dialog.current?.close();
+    startBusy(async () => {
+      const res = await deleteColor(productId, { hex: g.from ?? null, imageIds: of(g.hex).map((i) => i.id) });
+      if (!res.ok) return setErrors(res.errors.map((c) => (KNOWN_ERRORS.includes(c) ? t(`errors.${c}`) : c)));
+      setImages((cur) => cur.filter((i) => (i.colorHex ?? "") !== g.hex));
+      setGroups((cur) => cur.filter((x) => x.key !== g.key));
+    });
+  };
+  const pendingVariants = toDelete?.from ? (colors.find((c) => c.hex === toDelete.from)?.variants ?? 0) : 0;
+
   return (
     <section className="mt-6 rounded-panel bg-nieve p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -216,11 +237,15 @@ function ImagesPanel({ productId, initial, colors }: { productId: string; initia
                     ) : (
                       <p className="text-xs text-pizarra">{t("colorNameLater")}</p>
                     )}
-                    {!variant && list.length === 0 && (
-                      <button type="button" onClick={() => setGroups(groups.filter((x) => x.key !== g.key))} className="inline-flex items-center gap-2 text-sm text-pizarra hover:text-[#c4384a]">
-                        <Trash size={14} aria-hidden /> {t("removeColor")}
-                      </button>
-                    )}
+                    {/* sin nada guardado (color nuevo sin fotos) se quita sin preguntar; si no, confirma en el diálogo */}
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => (!variant && list.length === 0 ? setGroups(groups.filter((x) => x.key !== g.key)) : askDelete(g))}
+                      className="inline-flex h-10 items-center gap-2 rounded-md border border-linea px-3 text-sm text-pizarra hover:border-[#c4384a] hover:text-[#c4384a] disabled:opacity-50"
+                    >
+                      <Trash size={14} aria-hidden /> {t("removeColor")}
+                    </button>
                   </div>
                 )}
 
@@ -291,6 +316,34 @@ function ImagesPanel({ productId, initial, colors }: { productId: string; initia
           {errors.map((e, i) => <li key={i}>{e}</li>)}
         </ul>
       )}
+
+      {/* <dialog> modal nativo: foco atrapado, Esc cancela, fondo inerte. Botones type="button": está dentro del <form> */}
+      <dialog
+        ref={dialog}
+        aria-labelledby="delete-color-title"
+        onClose={() => setToDelete(null)}
+        className="m-auto w-[min(92vw,28rem)] rounded-panel border border-linea bg-nieve p-6 text-granito backdrop:bg-granito/40"
+      >
+        {toDelete && (
+          <>
+            <h2 id="delete-color-title" className="flex items-center gap-3 text-lg font-semibold">
+              <span className="size-5 rounded-full border border-linea" style={{ background: toDelete.hex }} />
+              {t("deleteColorTitle", { name: toDelete.nameEs || toDelete.hex })}
+            </h2>
+            <p className="mt-3 text-sm text-pizarra">
+              {t("deleteColorBody", { variants: pendingVariants, photos: of(toDelete.hex).length })}
+            </p>
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" autoFocus onClick={() => dialog.current?.close()} className="btn h-10 border border-granito">
+                {t("cancel")}
+              </button>
+              <button type="button" onClick={confirmDelete} className="btn h-10 bg-[#c4384a] text-nieve hover:bg-[#a52f3e]">
+                {t("deleteColorConfirm")}
+              </button>
+            </div>
+          </>
+        )}
+      </dialog>
     </section>
   );
 }
@@ -302,6 +355,7 @@ export function ProductForm({ product: initial, options, locale }: { product: Ad
   const [state, dispatch, pending] = useActionState<SaveState, FormData>(saveProduct.bind(null, initial.id), null);
   const [missing, setMissing] = useState<string[]>([]);
   const product = state?.ok ? state.product : initial;
+  const [names, setNames] = useState({ es: initial.translations.es.name, en: initial.translations.en.name });
   const title = product.translations[locale].name || product.code;
 
   return (
@@ -331,7 +385,20 @@ export function ProductForm({ product: initial, options, locale }: { product: Ad
         )}
       </div>
 
-      <section className="mt-8 grid gap-4 rounded-panel bg-nieve p-6 sm:grid-cols-2 lg:grid-cols-5">
+      <section className="mt-8 grid gap-4 rounded-panel bg-nieve p-6 sm:grid-cols-2 lg:grid-cols-6">
+        {/* precio único del producto: se aplica a todas sus variantes; sin variantes no hay dónde guardarlo */}
+        <label className={label}>
+          {t("price")}
+          <span className="relative block">
+            <span className="data pointer-events-none absolute top-1/2 left-3 mt-0.5 -translate-y-1/2 text-sm text-pizarra">S/</span>
+            {product.priceCents === null ? (
+              <input disabled placeholder="—" aria-describedby="price-hint" className={`${input} data pl-9 disabled:opacity-60`} />
+            ) : (
+              <input name="price" type="number" inputMode="decimal" required min={0.01} max={100000} step={0.01} defaultValue={(product.priceCents / 100).toFixed(2)} className={`${input} data pl-9`} />
+            )}
+          </span>
+          {product.priceCents === null && <span id="price-hint" className="mt-1 block">{t("priceNoVariants")}</span>}
+        </label>
         <label className={label}>
           {t("code")}
           <input name="code" required defaultValue={product.code} className={`${input} data uppercase`} />
@@ -371,11 +438,13 @@ export function ProductForm({ product: initial, options, locale }: { product: Ad
               <h2 className="data tracking-[0.2em] uppercase">{l === "es" ? "Español" : "English"}</h2>
               <label className={label}>
                 {t("name")}
-                <input name={`${l}.name`} required maxLength={120} defaultValue={tr.name} className={input} />
+                <input name={`${l}.name`} required maxLength={120} value={names[l]} onChange={(e) => setNames({ ...names, [l]: e.target.value })} className={input} />
               </label>
+              {/* slug derivado del nombre (lo genera la API al guardar); aquí solo se previsualiza */}
               <label className={label}>
                 {t("slug")}
-                <input name={`${l}.slug`} maxLength={140} defaultValue={tr.slug} placeholder={t("slugAuto")} pattern="[a-z0-9]+(-[a-z0-9]+)*" className={`${input} data`} />
+                <input disabled value={slugify(names[l])} aria-describedby={`${l}-slug-hint`} className={`${input} data disabled:bg-glaciar disabled:text-pizarra`} />
+                <span id={`${l}-slug-hint`} className="mt-1 block">{t("slugAuto")}</span>
               </label>
               <label className={label}>
                 {t("subtitle")}

@@ -148,7 +148,7 @@
     "noSeries": "Sin serie",
     "name": "Nombre",
     "slug": "Slug (URL)",
-    "slugAuto": "Se genera del nombre",
+    "slugAuto": "Se genera del nombre al guardar.",
     "subtitle": "Subtítulo técnico",
     "description": "Descripción",
     "techSpecs": "Ficha técnica",
@@ -164,7 +164,7 @@
     "newColor": "Color nuevo",
     "colorCustom": "Color personalizado",
     "colorTaken": "Ese color ya tiene su grupo",
-    "removeColor": "Quitar color",
+    "removeColor": "Eliminar color",
     "colorName": "Nombre",
     "colorNameLater": "El nombre se define al crear las variantes de este color.",
     "catalogCover": "Portada del catálogo",
@@ -192,7 +192,14 @@
       "invalid_tech_specs": "Ficha técnica inválida: máximo 30 propiedades, nombre hasta 40 y valor hasta 200 caracteres.",
       "color_taken": "Dos colores no pueden tener el mismo HEX (para intercambiarlos, guarda en dos pasos).",
       "image_type": "formato no admitido (JPG, PNG, WebP o AVIF).",
-      "image_size": "pesa más de 8 MB."
-    }
+      "image_size": "pesa más de 8 MB.",
+      "color_in_use": "No se puede eliminar: hay órdenes con variantes de este color."
+    },
+    "price": "Precio",
+    "priceNoVariants": "Se define al crear variantes.",
+    "cancel": "Cancelar",
+    "deleteColorTitle": "¿Eliminar el color {name}?",
+    "deleteColorBody": "Se eliminarán {variants, plural, =0 {sus datos} one {# variante (talla, precio y stock)} other {# variantes (tallas, precio y stock)}} y {photos, plural, =0 {ninguna foto} one {# foto} other {# fotos}} de este color, también del almacenamiento. No se puede deshacer.",
+    "deleteColorConfirm": "Eliminar color"
   }
 }
