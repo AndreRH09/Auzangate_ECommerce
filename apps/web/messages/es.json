@@ -15,7 +15,9 @@
     "series": "Series",
     "seeAll": "Ver todo",
     "shippingNote": "Envíos a todo el Perú",
-    "shop": "Tienda"
+    "shop": "Tienda",
+    "popular": "Búsquedas populares",
+    "featured": "Categorías destacadas"
   },
   "Footer": {
     "shop": "Tienda",
@@ -37,8 +39,8 @@
     "newsletterOk": "Listo. Te escribiremos cuando haya algo que valga la pena.",
     "newsletterError": "Revisa el correo e inténtalo otra vez.",
     "heroData": "6 384 m · 13°47′S 71°13′O · Cusco",
-    "seriesTitle": "Cinco series, un apu",
-    "seriesIntro": "Ediciones especiales: cada serie lleva el nombre de una cultura preinca y su propio parche, tejido en la manga."
+    "seriesTitle": "Cinco series",
+    "seriesIntro": "Ediciones especiales"
   },
   "Listing": {
     "count": "{count, plural, one {# prenda} other {# prendas}}",
@@ -61,8 +63,8 @@
     "next": "Ver más",
     "series": "Serie {name}",
     "searchTitle": "Resultados para “{q}”",
-    "searchEmptyTitle": "Buscar",
-    "searchPrompt": "Escribe el nombre de una prenda o un dato técnico, como “merino” o “pluma”.",
+    "searchEmptyTitle": "Presentando",
+    "searchPrompt": "buscar",
     "emptyTitle": "Nada por aquí con estos filtros",
     "seriesCode": "6384 · {code}",
     "gender": "Para",

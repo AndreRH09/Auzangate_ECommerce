@@ -1,6 +1,8 @@
+import { MagnifyingGlass, X } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ProductListing, type ListingParams } from "@/components/catalog/ProductListing";
+import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 
 // Resultados de búsqueda: noindex, follow (plan §3.4). Sin q lista todo el catálogo.
@@ -20,10 +22,24 @@ export default async function SearchPage({ params, searchParams }: PageProps<"/[
 
   return (
     <>
-      <form action={`/${locale}/buscar`} role="search" className="mx-auto max-w-[1600px] px-4 pt-6 md:px-8">
-        <label htmlFor="q" className="text-xs text-pizarra">{t("searchPrompt")}</label>
-        <input id="q" name="q" type="search" defaultValue={q} className="mt-1 h-cta w-full max-w-lg rounded-sm border border-linea bg-nieve px-4 text-base" />
-      </form>
+      {/* la barra solo aparece con una búsqueda cargada; sin q se busca desde la lupa del header */}
+      {q && (
+        // mismo estilo que el input del SearchPanel: píldora con limpiar + buscar contiguos a la derecha
+        <form action={`/${locale}/buscar`} role="search" className="relative mx-auto mt-6 w-[calc(100%-32px)] md:w-[25vw] md:min-w-80">
+          <label htmlFor="q" className="sr-only">{t("searchPrompt")}</label>
+          <input id="q" name="q" type="search" required maxLength={80} defaultValue={q} className="h-12 w-full rounded-full border border-linea bg-nieve pr-24 pl-5 [&::-webkit-search-cancel-button]:hidden" />
+          <div className="absolute top-1/2 right-1 flex -translate-y-1/2 gap-1">
+            <Link href="/buscar" className="grid size-10 place-items-center rounded-full text-pizarra hover:bg-glaciar hover:text-granito">
+              <X size={18} aria-hidden />
+              <span className="sr-only">{t("clear")}</span>
+            </Link>
+            <button className="grid size-10 place-items-center rounded-full bg-granito text-nieve">
+              <MagnifyingGlass size={18} aria-hidden />
+              <span className="sr-only">{t("searchPrompt")}</span>
+            </button>
+          </div>
+        </form>
+      )}
       <ProductListing
         locale={locale}
         path="/buscar"

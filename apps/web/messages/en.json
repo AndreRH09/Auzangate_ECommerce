@@ -15,7 +15,9 @@
     "series": "Series",
     "seeAll": "See all",
     "shippingNote": "Shipping across Peru",
-    "shop": "Shop"
+    "shop": "Shop",
+    "popular": "Popular searches",
+    "featured": "Featured categories"
   },
   "Footer": {
     "shop": "Shop",
@@ -38,7 +40,7 @@
     "newsletterError": "Check the email and try again.",
     "heroData": "6,384 m · 13°47′S 71°13′W · Cusco",
     "seriesTitle": "Five series",
-    "seriesIntro": "Special editions: each series is named after a pre-Inca culture and carries its own patch, woven on the sleeve."
+    "seriesIntro": "Special editions"
   },
   "Listing": {
     "count": "{count, plural, one {# item} other {# items}}",
@@ -61,8 +63,8 @@
     "next": "Show more",
     "series": "{name} series",
     "searchTitle": "Results for “{q}”",
-    "searchEmptyTitle": "Search",
-    "searchPrompt": "Type a product name or a tech detail, like “merino” or “down”.",
+    "searchEmptyTitle": "Featuring",
+    "searchPrompt": "search",
     "emptyTitle": "Nothing here with these filters",
     "seriesCode": "6384 · {code}",
     "gender": "For",

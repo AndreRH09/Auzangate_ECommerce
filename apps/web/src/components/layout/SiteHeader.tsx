@@ -4,10 +4,11 @@ import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { BrandMark } from "../ui/BrandMark";
 import { MainMenu } from "./MainMenu";
+import { SEARCH_PANEL_ID, SearchPanel } from "./SearchPanel";
 
 const icon = "size-11 grid place-items-center"; // zona táctil 44 px
 
-// Header tipo C (design system §3): Menú + búsqueda | logo al centro | cuenta, favoritos, bolsa.
+// Header tipo C (design system §3): Menú | logo al centro | búsqueda (lupa → SearchPanel), cuenta, favoritos, bolsa.
 export async function SiteHeader({ locale }: { locale: Locale }) {
   const t = await getTranslations("Header");
 
@@ -19,17 +20,6 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
             <List size={20} aria-hidden />
             <span className="max-md:sr-only">{t("menu")}</span>
           </button>
-          <form action={`/${locale}/buscar`} role="search" className="relative hidden md:block">
-            <MagnifyingGlass size={16} aria-hidden className="absolute top-1/2 left-3 -translate-y-1/2 text-pizarra" />
-            <label htmlFor="header-q" className="sr-only">{t("searchLabel")}</label>
-            <input
-              id="header-q"
-              name="q"
-              type="search"
-              placeholder={t("search")}
-              className="h-10 w-64 rounded-sm border border-linea bg-nieve pr-3 pl-9 placeholder:text-pizarra lg:w-80"
-            />
-          </form>
         </div>
 
         {/* manual de marca §5: lockup horizontal en desktop, monograma en mobile */}
@@ -39,9 +29,9 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
         </Link>
 
         <nav aria-label={t("account")} className="flex items-center justify-end">
-          <Link href="/buscar" aria-label={t("searchLabel")} className={`${icon} md:hidden`}>
+          <button popoverTarget={SEARCH_PANEL_ID} aria-label={t("searchLabel")} className={icon}>
             <MagnifyingGlass size={20} aria-hidden />
-          </Link>
+          </button>
           {/* ponytail: cuenta, favoritos y bolsa enlazan a rutas de F2; el contador queda en 0 hasta tener bolsa */}
           <span className={`${icon} max-md:hidden`}>
             <User size={20} aria-hidden />
@@ -60,6 +50,7 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
       </div>
 
       <MainMenu locale={locale} />
+      <SearchPanel locale={locale} />
     </header>
   );
 }
