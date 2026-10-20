@@ -200,6 +200,38 @@
     "cancel": "Cancelar",
     "deleteColorTitle": "¿Eliminar el color {name}?",
     "deleteColorBody": "Se eliminarán {variants, plural, =0 {sus datos} one {# variante (talla, precio y stock)} other {# variantes (tallas, precio y stock)}} y {photos, plural, =0 {ninguna foto} one {# foto} other {# fotos}} de este color, también del almacenamiento. No se puede deshacer.",
-    "deleteColorConfirm": "Eliminar color"
+    "deleteColorConfirm": "Eliminar color",
+    "dashboard": "Dashboard",
+    "catalogSetup": "Categorías y series",
+    "orders": "Pedidos",
+    "settings": "Ajustes",
+    "menu": "Menú",
+    "close": "Cerrar",
+    "collapse": "Colapsar menú",
+    "expand": "Expandir menú",
+    "kpi": {
+      "salesToday": "Ventas hoy",
+      "sales30d": "Ventas 30 días",
+      "avgTicket": "Ticket promedio (30 d)",
+      "toShip": "Pedidos por enviar"
+    },
+    "lowStock": "Stock bajo",
+    "lowStockEmpty": "Ninguna variante bajo su umbral.",
+    "recentOrders": "Últimos pedidos",
+    "ordersEmpty": "Sin pedidos aún (el checkout llega en F2).",
+    "order": "Pedido",
+    "total": "Total",
+    "date": "Fecha",
+    "size": "Talla",
+    "orderStatus": {
+      "PENDING_PAYMENT": "Pago pendiente",
+      "PAID": "Pendiente",
+      "NEEDS_REVIEW": "En revisión",
+      "PREPARING": "Por enviar",
+      "SHIPPED": "Enviado",
+      "DELIVERED": "Entregado",
+      "CANCELLED": "Cancelado",
+      "REFUNDED": "Reembolsado"
+    }
   }
 }

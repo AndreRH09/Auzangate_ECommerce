@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { slugify } from '../slugify.js';
 import type { AddImageDto, AdminProductsQuery, DeleteColorDto, SaveProductDto } from './admin-catalog.dto.js';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 10;
 const LOCALES = ['es', 'en'] as const satisfies Locale[];
 
 // El cuerpo de los 409/422: { message: [códigos] }, igual que los 400 de validación.

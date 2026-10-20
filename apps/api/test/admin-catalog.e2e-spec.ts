@@ -48,7 +48,9 @@ describe('Admin de catálogo (e2e)', () => {
     const codes = (await list('&sort=code')).items.map((p) => p.code);
     expect(codes).toEqual([...codes].sort());
     const page2 = await list('&page=2');
-    expect(page2).toMatchObject({ page: 2, pageSize: 25, items: [] });
+    expect(page2).toMatchObject({ page: 2, pageSize: 10 });
+    expect(page2.items).toHaveLength(3);
+    expect((await list('&page=3')).items).toEqual([]);
   });
 
   describe('editar producto', () => {

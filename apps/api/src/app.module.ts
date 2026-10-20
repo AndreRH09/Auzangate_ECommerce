@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AdminCatalogModule } from './admin/admin-catalog.controller.js';
+import { AdminDashboardModule } from './admin/admin-dashboard.js';
 import { AuthModule } from './auth/auth.controller.js';
 import { CatalogModule } from './catalog/catalog.module.js';
 import { validateEnv } from './config/env.js';
@@ -23,6 +24,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     PrismaModule,
     AuthModule,
     AdminCatalogModule,
+    AdminDashboardModule,
     CatalogModule,
     NewsletterModule,
   ],

@@ -134,5 +134,17 @@ export type AdminImageUpload = { r2Key: string; width: number; height: number };
 
 export type AdminCatalogOptions = { categories: { id: string; name: string }[]; series: { id: string; name: string }[] };
 
+// --- Dashboard del admin (RF-A30) ---
+export type OrderStatus = 'PENDING_PAYMENT' | 'PAID' | 'NEEDS_REVIEW' | 'PREPARING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
+
+export type AdminDashboard = {
+  salesTodayCents: number; // órdenes PAID..DELIVERED desde la medianoche de Lima
+  sales30dCents: number;
+  avgTicketCents: number; // de los últimos 30 días
+  ordersToShip: number; // PAID + PREPARING
+  lowStock: { productId: string; name: string; sku: string; color: string; size: string; stock: number; lowStockAt: number }[];
+  recentOrders: { id: string; number: string; email: string; status: OrderStatus; totalCents: number; createdAt: string }[];
+};
+
 // Códigos de error de guardado (409/422); la web los traduce.
 export type AdminSaveError = 'code_taken' | 'slug_taken' | 'invalid_category' | 'need_variant_price' | 'need_image_alt' | 'invalid_tech_specs' | 'color_taken' | 'color_in_use';

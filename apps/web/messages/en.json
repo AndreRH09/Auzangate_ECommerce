@@ -200,6 +200,38 @@
     "cancel": "Cancel",
     "deleteColorTitle": "Delete color {name}?",
     "deleteColorBody": "This deletes {variants, plural, =0 {its data} one {# variant (size, price and stock)} other {# variants (sizes, price and stock)}} and {photos, plural, =0 {no photos} one {# photo} other {# photos}} of this color, also from storage. This cannot be undone.",
-    "deleteColorConfirm": "Delete color"
+    "deleteColorConfirm": "Delete color",
+    "dashboard": "Dashboard",
+    "catalogSetup": "Categories & series",
+    "orders": "Orders",
+    "settings": "Settings",
+    "menu": "Menu",
+    "close": "Close",
+    "collapse": "Collapse menu",
+    "expand": "Expand menu",
+    "kpi": {
+      "salesToday": "Sales today",
+      "sales30d": "Sales 30 days",
+      "avgTicket": "Average ticket (30 d)",
+      "toShip": "Orders to ship"
+    },
+    "lowStock": "Low stock",
+    "lowStockEmpty": "No variant below its threshold.",
+    "recentOrders": "Latest orders",
+    "ordersEmpty": "No orders yet (checkout arrives in F2).",
+    "order": "Order",
+    "total": "Total",
+    "date": "Date",
+    "size": "Size",
+    "orderStatus": {
+      "PENDING_PAYMENT": "Awaiting payment",
+      "PAID": "Pending",
+      "NEEDS_REVIEW": "Under review",
+      "PREPARING": "To ship",
+      "SHIPPED": "Shipped",
+      "DELIVERED": "Delivered",
+      "CANCELLED": "Cancelled",
+      "REFUNDED": "Refunded"
+    }
   }
 }
