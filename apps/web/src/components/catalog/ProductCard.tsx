@@ -11,7 +11,7 @@ const STEP_MS = 1500;
 
 // Card de catálogo (design system §4): foto 4:5, swatches, nombre, dato técnico, precio mono.
 // Swatch = cambia las fotos al color elegido sin navegar. Hover sobre la foto = recorre las fotos de ese color;
-// al salir vuelve a la portada. Solo el bloque de texto lleva al detalle.
+// al salir vuelve a la portada. Foto y bloque de texto llevan al detalle.
 export function ProductCard({ product: p, priority = false }: { product: Card; priority?: boolean }) {
   const t = useTranslations("Product");
   const [color, setColor] = useState(() => p.images.find((i) => i.colorHex)?.colorHex ?? p.colors[0]?.hex ?? null);
@@ -33,8 +33,12 @@ export function ProductCard({ product: p, priority = false }: { product: Card; p
 
   return (
     <article>
-      <div
-        className="relative aspect-[4/5] overflow-hidden rounded-sm bg-photo"
+      {/* foto duplica el link del nombre: fuera del tab order y del árbol a11y */}
+      <Link
+        href={`/p/${p.slug}`}
+        tabIndex={-1}
+        aria-hidden
+        className="relative block aspect-[4/5] overflow-hidden rounded-sm bg-photo"
         onMouseEnter={() => {
           setHover(true);
           setArmed(true);
@@ -61,7 +65,7 @@ export function ProductCard({ product: p, priority = false }: { product: Card; p
             ))}
           </ol>
         )}
-      </div>
+      </Link>
 
       <ul className="mt-3 flex items-center gap-1">
         {p.colors.slice(0, 4).map((c) => (
