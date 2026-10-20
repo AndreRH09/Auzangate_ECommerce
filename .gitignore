@@ -27,6 +27,9 @@ apps/api/src/generated
 # contexto local
 ClaudeContext/*
 .claude
+.windsurf
+.agents
+skills-lock.json
 
 docs
 # capturas del MCP de Playwright
