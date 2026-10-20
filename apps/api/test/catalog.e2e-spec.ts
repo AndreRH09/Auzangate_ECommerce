@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
+import { CARD_PHOTOS_PER_COLOR } from '../src/catalog/catalog.service.js';
 import { setupApp } from '../src/setup.js';
 
 // Requiere el catálogo del seed (pnpm db:seed catalog): 13 productos unisex, 1 en borrador (Pantalón AV02).
@@ -34,6 +35,17 @@ describe('Catálogo (e2e)', () => {
     expect(page.body.nextCursor).toBe('5');
     const next = await get(`/v1/products?locale=es&limit=5&cursor=${page.body.nextCursor}`).expect(200);
     expect(next.body.items[0].id).not.toBe(page.body.items[0].id);
+  });
+
+  // presupuesto de peso: la web cachea /products (máx. 2 MB por entrada en Next); muy por debajo, con margen para crecer
+  it('listado con peso acotado: tope de fotos por color en las cards', async () => {
+    const res = await get('/v1/products?locale=es&limit=48').expect(200);
+    expect(res.text.length).toBeLessThan(256 * 1024);
+    for (const card of res.body.items as { images: { colorHex: string | null }[] }[]) {
+      const perColor: Record<string, number> = {};
+      for (const i of card.images) perColor[String(i.colorHex)] = (perColor[String(i.colorHex)] ?? 0) + 1;
+      expect(Math.max(0, ...Object.values(perColor))).toBeLessThanOrEqual(CARD_PHOTOS_PER_COLOR);
+    }
   });
 
   it('filtro por categoría; orden por precio', async () => {

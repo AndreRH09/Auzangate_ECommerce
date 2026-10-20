@@ -7,13 +7,17 @@ import type { Card, Category, Image, Named, Product, ProductList, Series, Sitema
 import type { ProductsQuery } from './catalog.dto.js';
 
 const NEW_DAYS = 30;
+// Techo de fotos por color (y del grupo "todos los colores") en las cards, para que el JSON del listado tenga peso acotado:
+// 48 cards × 8 colores × 6 fotos × ~200 B ≈ 460 KB en el peor caso, lejos de los 2 MB por entrada de la caché de datos de Next
+// (sobre eso Next no cachea y cada visita despertaría a la API). El PDP sigue trayendo todas.
+export const CARD_PHOTOS_PER_COLOR = 6;
 
 const translations = { select: { locale: true, name: true, slug: true } } as const;
 
 const cardInclude = {
   translations: { select: { locale: true, name: true, slug: true, subtitle: true } },
   variants: { select: { colorHex: true, colorName: true, size: true, priceCents: true, stock: true } },
-  images: { orderBy: { sort: 'asc' }, take: 2 },
+  images: { orderBy: { sort: 'asc' } }, // todas: la card recorre las fotos del color elegido en hover
 } satisfies Prisma.ProductInclude;
 
 type CardRow = Prisma.ProductGetPayload<{ include: typeof cardInclude }>;
@@ -27,7 +31,16 @@ const named = (rows: NamedRow[], locale: Locale): Named => ({ name: pick(rows, l
 const fromPrice = (p: CardRow) => Math.min(...p.variants.map((v) => v.priceCents)); // precio "desde"
 // Claves de R2 -> URL pública. URLs absolutas o rutas del front ("/products/...") pasan tal cual.
 export const toImageUrl = (key: string, base: string) => (/^(https?:)?\//.test(key) ? key : `${base}/${key}`);
-const uniqueBy =<T>(rows: T[], key: (r: T) => string) => [...new Map(rows.map((r) => [key(r), r])).values()];
+// conserva el orden de la galería y deja pasar las primeras CARD_PHOTOS_PER_COLOR de cada color
+const capPerColor = (imgs: ImageRow[]) => {
+  const seen = new Map<string | null, number>();
+  return imgs.filter((i) => {
+    const n = (seen.get(i.colorHex) ?? 0) + 1;
+    seen.set(i.colorHex, n);
+    return n <= CARD_PHOTOS_PER_COLOR;
+  });
+};
+const uniqueBy = <T>(rows: T[], key: (r: T) => string) => [...new Map(rows.map((r) => [key(r), r])).values()];
 
 @Injectable()
 export class CatalogService {
@@ -59,7 +72,7 @@ export class CatalogService {
       colors: uniqueBy(p.variants, (v) => v.colorHex).map((v) => ({ hex: v.colorHex, name: (v.colorName as Record<Locale, string>)[locale] })),
       isNew: Date.now() - p.createdAt.getTime() < NEW_DAYS * 864e5,
       soldOut: p.variants.every((v) => v.stock <= 0),
-      images: p.images.map((img) => this.image(img, locale)),
+      images: capPerColor(p.images).map((img) => this.image(img, locale)),
       alternates: alternates(p.translations),
     };
   }
