@@ -42,7 +42,8 @@ jobs:
           # el motor de migraciones de Prisma no usa el driver mariadb: TLS con la CA por parámetros del URL
           printf '%s' "$DATABASE_CA" > "$RUNNER_TEMP/ca.pem"
           DATABASE_URL="${DATABASE_URL%%\?*}?sslaccept=strict&sslcert=$RUNNER_TEMP/ca.pem" pnpm exec prisma migrate deploy
-          if [ "${{ inputs.seed }}" = "true" ]; then pnpm db:seed; fi
+          # el seed importa el cliente generado (src/generated, ignorado en git)
+          if [ "${{ inputs.seed }}" = "true" ]; then pnpm exec prisma generate && pnpm db:seed; fi
 
       - name: Deploy de la API en Render
         env:
