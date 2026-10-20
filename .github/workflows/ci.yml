@@ -29,6 +29,7 @@ jobs:
           --health-interval=5s --health-timeout=3s --health-retries=20
     env:
       DATABASE_URL: mysql://root:root@127.0.0.1:3306/auzangate_test
+      JWT_SECRET: ci-only-secret-not-used-anywhere-else
       WRANGLER_SEND_METRICS: "false"
     steps:
       - uses: actions/checkout@v4
@@ -43,13 +44,21 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
 
-      - name: Migraciones
-        run: pnpm --filter api exec prisma migrate deploy
+      - name: Migraciones y catálogo de ejemplo (lo usan los e2e)
+        run: pnpm --filter api exec prisma migrate deploy && pnpm --filter api db:seed catalog
       - name: Tests
         run: pnpm test && pnpm --filter api test:e2e
 
       - name: Build de la API
         run: pnpm --filter api build
+
+      # El build de Next pre-genera /es, /en y el sitemap con datos del catálogo: necesita la API viva
+      - name: Levantar la API para el build
+        working-directory: apps/api
+        run: |
+          node dist/main.js > /tmp/api.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://localhost:3000/health && exit 0; sleep 1; done
+          cat /tmp/api.log; exit 1
 
       - name: Build del worker (OpenNext)
         run: pnpm --filter web exec opennextjs-cloudflare build

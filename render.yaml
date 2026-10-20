@@ -1,0 +1,27 @@
+# API en Render (plan §0): Docker, plan gratuito. Se crea una vez desde Render > New > Blueprint > este repo.
+# Sin auto-deploy: .github/workflows/deploy.yml migra la BD primero y después dispara el deploy hook.
+services:
+  - type: web
+    name: auzangate-api
+    runtime: docker
+    plan: free
+    region: virginia # cerca de Perú; la BD de Aiven conviene en la misma zona (AWS us-east-1)
+    branch: main
+    dockerContext: .
+    dockerfilePath: apps/api/Dockerfile # etapa final = runtime
+    autoDeployTrigger: "off"
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SWAGGER_ENABLED
+        value: "true" # /docs es parte del portafolio
+      - key: JWT_SECRET
+        generateValue: true
+      # se cargan a mano en el panel (sync: false = Render los pide al crear el blueprint)
+      - key: DATABASE_URL # mysql://usuario:clave@host:puerto/defaultdb, sin "?ssl-mode=…"
+        sync: false
+      - key: DATABASE_CA # CA de Aiven en PEM (Overview > CA certificate)
+        sync: false
+      - key: IMAGE_BASE_URL # https://<worker>.workers.dev/media (fotos subidas desde el admin)
+        sync: false

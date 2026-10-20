@@ -9,5 +9,15 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "r2_buckets": [
+    // Fotos de producto (F1·5): las sube el admin y las sirve /media/*. En `next dev` es un bucket local (.wrangler/state)
+    { "binding": "MEDIA", "bucket_name": "auzangate-media" },
+    // caché incremental de OpenNext (ISR y fetch con revalidate), ver open-next.config.ts
+    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "auzangate-cache" }
+  ],
+  // tags revalidados (updateTag); creada con `wrangler d1 create auzangate-tag-cache`
+  "d1_databases": [{ "binding": "NEXT_TAG_CACHE_D1", "database_name": "auzangate-tag-cache", "database_id": "9f557a1b-5b42-465e-947c-003adcf59bd9" }],
+  // la cola de revalidación (memory queue) se llama a sí misma por este binding
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "auzangate-web" }],
   "observability": { "enabled": true }
 }
