@@ -52,14 +52,14 @@ jobs:
           curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" > /dev/null
           # ponytail: espera a que /health responda (despierta la instancia), no a que termine el deploy nuevo;
           # el build del worker solo usa endpoints públicos del catálogo. Consultar la API de Render si eso cambia.
-          for i in $(seq 1 60); do curl -fsS "$API_URL/health" && exit 0; sleep 10; done
+          for i in $(seq 1 60); do curl -fsS "$API_URL/health/db" && exit 0; sleep 10; done
           echo "La API no respondió en 10 min"; exit 1
 
       - name: Build del worker (OpenNext)
         working-directory: apps/web
         run: |
           # solo valores públicos: OpenNext los compila dentro del worker
-          printf 'API_URL=%s\nSITE_URL=%s\nSITE_ENV=production\n' "${{ vars.API_URL }}" "${{ vars.SITE_URL }}" > .env.production
+          printf 'API_URL=%s\nSITE_URL=%s\nSITE_ENV=production\nGOOGLE_SITE_VERIFICATION=%s\n' "${{ vars.API_URL }}" "${{ vars.SITE_URL }}" "${{ vars.GOOGLE_SITE_VERIFICATION }}" > .env.production
           pnpm exec opennextjs-cloudflare build
 
       - name: Deploy del worker (Cloudflare)

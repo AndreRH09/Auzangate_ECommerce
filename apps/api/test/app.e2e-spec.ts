@@ -17,7 +17,11 @@ describe('API (e2e)', () => {
   });
 
   it('GET /health responde ok', () => {
-    return request(app.getHttpServer()).get('/health').expect(200).expect({ status: 'ok', db: 'up' });
+    return request(app.getHttpServer()).get('/health').expect(200).expect({ status: 'ok' });
+  });
+
+  it('GET /health/db responde ok', () => {
+    return request(app.getHttpServer()).get('/health/db').expect(200).expect({ status: 'ok', db: 'up' });
   });
 
   afterEach(async () => {
