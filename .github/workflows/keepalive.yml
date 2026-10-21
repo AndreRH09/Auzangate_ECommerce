@@ -1,0 +1,33 @@
+name: keepalive
+
+# Aiven (plan gratis) apaga la BD tras un tiempo sin actividad; un SELECT 1 periódico la mantiene encendida.
+# Alertas = correo de GitHub cuando este workflow falla (Settings > Notifications > Actions: "only failures"):
+#  - ping: la API/BD no respondió (Aiven apagado, Render caído).
+#  - inactividad: GitHub desactiva los cron tras 60 días sin commits; avisa desde el día 45.
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    # URL pública fija: vars.API_URL vive en el environment production y usarlo crearía un deployment cada 6 h
+    env:
+      API_URL: https://auzangate-api.onrender.com
+    steps:
+      # reintenta: la instancia free de Render tarda en despertar
+      - name: API y BD responden
+        run: for i in $(seq 1 12); do curl -fsS "$API_URL/health/db" && exit 0; sleep 10; done; echo "::error::/health/db no respondió (¿Aiven apagado?)"; exit 1
+
+  inactividad:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Último commit hace menos de 45 días
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          last=$(gh api "repos/${{ github.repository }}/commits/${{ github.event.repository.default_branch }}" --jq .commit.committer.date)
+          days=$(( ($(date +%s) - $(date -d "$last" +%s)) / 86400 ))
+          echo "último commit hace $days días"
+          if [ "$days" -ge 45 ]; then echo "::error::$days días sin commits: GitHub desactiva este cron a los 60. Haz un commit."; exit 1; fi
