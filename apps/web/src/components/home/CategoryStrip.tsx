@@ -14,7 +14,10 @@ export function CategoryStrip({ title, tiles }: { title: string; tiles: Category
           <li key={tile.href}>
             <Link href={tile.href} className="group block">
               <div className="aspect-[4/5] overflow-hidden rounded-sm bg-photo">
-                {tile.image && <ProductPhoto image={tile.image} alt="" className="size-full" />}
+                {/* fotos de producto (lienzo cuadrado con margen): +25 % para que la prenda llene el tile; las de ambiente 4:5 quedan igual */}
+                {tile.image && (
+                  <ProductPhoto image={tile.image} alt="" className={`size-full ${tile.image.width / tile.image.height > 0.85 ? "scale-125" : ""}`} />
+                )}
               </div>
               <p className="mt-3 text-sm font-semibold group-hover:underline">{tile.name}</p>
             </Link>
