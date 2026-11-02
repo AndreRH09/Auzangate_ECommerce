@@ -54,7 +54,8 @@ export function ProductCard({ product: p, priority = false }: { product: Card; p
             image={img}
             alt={i === 0 ? img.alt : ""}
             priority={priority && i === 0}
-            className={`absolute inset-0 size-full transition-opacity duration-500 motion-reduce:transition-none ${i === index ? "opacity-100" : "opacity-0"}`}
+            // renders de prenda (no verticales): +23%, traen mucho aire; las fotos de ambiente 4:5 no se tocan (se recortarían)
+            className={`absolute inset-0 size-full transition-opacity duration-500 motion-reduce:transition-none ${img.width / img.height > 0.85 ? "scale-123" : ""} ${i === index ? "opacity-100" : "opacity-0"}`}
           />
         ))}
         {(p.soldOut || p.isNew) && <span className="label absolute top-2 left-2 text-cochinilla">{p.soldOut ? t("soldOut") : t("new")}</span>}

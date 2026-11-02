@@ -37,8 +37,9 @@ export function ProductGallery({ images, label }: { images: Image[]; label: stri
       <ul className="flex snap-x snap-mandatory gap-2 overflow-x-auto" aria-label={label}>
         {images.map((img, i) => (
           <li key={img.url} className="relative shrink-0 basis-full snap-start md:basis-[42vw]">
-            <button type="button" onClick={() => open(i)} aria-label={t("zoom", { n: i + 1 })} className="block w-full cursor-zoom-in">
-              <ProductPhoto image={img} pad="p-8" priority={i === 0} className="aspect-[4/5] w-full bg-photo" />
+            <button type="button" onClick={() => open(i)} aria-label={t("zoom", { n: i + 1 })} className="block w-full cursor-zoom-in overflow-hidden bg-photo">
+              {/* renders de prenda (no verticales): +20%; las fotos de ambiente 4:5 no se tocan (se recortarían) */}
+              <ProductPhoto image={img} pad="p-8" priority={i === 0} className={`aspect-[4/5] w-full ${img.width / img.height > 0.85 ? "scale-120" : ""}`} />
             </button>
             <span className="data absolute bottom-3 left-3 rounded-sm bg-granito/80 px-2 py-1 text-nieve md:hidden">
               {i + 1} / {images.length}
@@ -66,7 +67,7 @@ export function ProductGallery({ images, label }: { images: Image[]; label: stri
               image={img}
               pad="p-12"
               priority
-              style={{ transformOrigin: zoom ?? "center", scale: zoom ? "2.2" : "1" }}
+              style={{ transformOrigin: zoom ?? "center", scale: zoom ? "2.5" : "1.15" }} // 1.15: las fotos traen mucho aire alrededor de la prenda
               className="size-full transition-[scale] duration-300 ease-(--ease-fluid)"
             />
           </div>
