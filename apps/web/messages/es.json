@@ -240,7 +240,7 @@
     },
     "newProduct": "Nuevo producto",
     "newProductHint": "Se crea como borrador. Después completas ficha, variantes y fotos.",
-    "codeHint": "[F]A + inicial de la serie (C/W/S/V/N) + 2 dígitos. F solo para cortes de mujer.",
+    "codeHint": "[F]A + inicial de la serie (C/W/S/V/N) + 2 o 3 dígitos (AW01…AW999). F solo para cortes de mujer.",
     "createDraft": "Crear borrador",
     "variantsAndPhotos": "Variantes y fotos",
     "applyAll": "Aplicar a {count, plural, one {# talla} other {las # tallas}}",

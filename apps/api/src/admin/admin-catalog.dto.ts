@@ -108,8 +108,8 @@ class VariantDto {
   stock: number;
 }
 
-/** convención: [F] A + inicial de serie + 2 dígitos (AW01, FAW01) */
-const CODE = [/^F?A[CWSVN]\d{2}$/, { message: 'code: formato [F]A + serie (C/W/S/V/N) + 2 dígitos' }] as const;
+/** convención: [F] A + inicial de serie + 2 o 3 dígitos (AW01, FAW01, AW100) */
+const CODE = [/^F?A[CWSVN]\d{2,3}$/, { message: 'code: formato [F]A + serie (C/W/S/V/N) + 2 o 3 dígitos' }] as const;
 
 // RF-A02/A03: el formulario completo (PUT). Ambas traducciones son obligatorias.
 export class SaveProductDto {

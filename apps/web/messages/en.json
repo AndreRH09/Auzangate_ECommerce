@@ -240,7 +240,7 @@
     },
     "newProduct": "New product",
     "newProductHint": "It is created as a draft. Then you complete details, variants and photos.",
-    "codeHint": "[F]A + series initial (C/W/S/V/N) + 2 digits. F only for women cuts.",
+    "codeHint": "[F]A + series initial (C/W/S/V/N) + 2 or 3 digits (AW01…AW999). F only for women cuts.",
     "createDraft": "Create draft",
     "variantsAndPhotos": "Variants and photos",
     "applyAll": "Apply to {count, plural, one {# size} other {all # sizes}}",

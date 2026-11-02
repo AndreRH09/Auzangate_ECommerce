@@ -35,7 +35,7 @@ export function NewProductForm({ options }: { options: AdminCatalogOptions }) {
       <section className="mt-8 grid gap-4 rounded-panel bg-nieve p-6 sm:grid-cols-2">
         <label className={label}>
           {t("code")}
-          <input name="code" required pattern="[Ff]?[Aa][CWSVNcwsvn][0-9]{2}" placeholder="AW03" aria-describedby="code-hint" className={`${input} data uppercase`} />
+          <input name="code" required pattern="[Ff]?[Aa][CWSVNcwsvn][0-9]{2,3}" placeholder="AW03" aria-describedby="code-hint" className={`${input} data uppercase`} />
           <span id="code-hint" className="mt-1 block">{t("codeHint")}</span>
         </label>
         <label className={label}>
