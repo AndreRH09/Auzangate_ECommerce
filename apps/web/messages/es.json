@@ -91,7 +91,11 @@
     "shipping": "Envío y cambios",
     "shippingText": "Envío a todo el Perú con tarifa por zona (Lima Metropolitana y provincias). El costo exacto se calcula en el checkout.",
     "related": "Combina con",
-    "sku": "SKU"
+    "sku": "SKU",
+    "zoom": "Ampliar foto {n}",
+    "close": "Cerrar",
+    "prev": "Foto anterior",
+    "next": "Foto siguiente"
   },
   "NotFound": {
     "title": "No encontramos esta página",

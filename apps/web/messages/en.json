@@ -91,7 +91,11 @@
     "shipping": "Shipping and returns",
     "shippingText": "Shipping across Peru with zone rates (Lima and other regions). The exact cost is calculated at checkout.",
     "related": "Pairs with",
-    "sku": "SKU"
+    "sku": "SKU",
+    "zoom": "Enlarge photo {n}",
+    "close": "Close",
+    "prev": "Previous photo",
+    "next": "Next photo"
   },
   "NotFound": {
     "title": "We could not find this page",
