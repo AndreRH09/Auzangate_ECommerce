@@ -33,6 +33,8 @@ export async function generateMetadata({ params }: LayoutProps<"/[locale]">): Pr
     description: t("description"),
     // preview (PRs): nunca indexar (plan §8.2)
     ...(process.env.SITE_ENV === "preview" && { robots: { index: false, follow: false } }),
+    // Search Console en workers.dev (sin DNS propio): verificación por <meta name="google-site-verification">
+    ...(process.env.GOOGLE_SITE_VERIFICATION && { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }),
   };
 }
 
