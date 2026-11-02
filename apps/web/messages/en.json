@@ -247,6 +247,7 @@
     "sizes": "Sizes",
     "removeSize": "Remove size",
     "otherSize": "Other size ↵",
+    "allSizes": "XS–XXL",
     "deleteProduct": "Delete product",
     "deleteProductTitle": "Delete {name}?",
     "deleteProductBody": "The product, its variants and its photos are deleted (also from storage). This cannot be undone. If it already has orders, archive it instead.",

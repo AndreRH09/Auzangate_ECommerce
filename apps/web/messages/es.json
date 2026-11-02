@@ -247,6 +247,7 @@
     "sizes": "Tallas",
     "removeSize": "Quitar talla",
     "otherSize": "Otra talla ↵",
+    "allSizes": "XS–XXL",
     "deleteProduct": "Eliminar producto",
     "deleteProductTitle": "¿Eliminar {name}?",
     "deleteProductBody": "Se borran el producto, sus variantes y sus fotos (también del almacenamiento). No se puede deshacer. Si ya tiene pedidos, archívalo en su lugar.",
