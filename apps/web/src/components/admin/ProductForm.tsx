@@ -23,6 +23,7 @@ export const KNOWN_ERRORS = [
   "color_in_use",
   "image_type",
   "image_size",
+  "image_upload",
   "sku_taken",
   "size_taken",
   "need_color_name",
@@ -72,11 +73,49 @@ function SpecsEditor({ locale: l, initial }: { locale: Locale; initial: Record<s
 const PRESETS = ["#262527", "#606263", "#E6E8E8", "#FFFFFF", "#9E1B32", "#E9E3D6", "#2F4A3A", "#1F3A5F"];
 const HEX = /^#[0-9A-F]{6}$/;
 export const MIN_PHOTOS = 3;
+// Presentación estándar de toda foto: lienzo cuadrado transparente con el producto centrado y encajado en BOX
+// (así ninguna se ve más grande que otra en el catálogo)
+const CANVAS = 1024;
+const BOX = 640; // ~19 % de margen por lado
+
+// En el navegador: recorta al contorno del producto, lo encaja en BOX, lo centra y re-codifica a WebP
+// (pesa ~10× menos que un PNG y cambia los bytes: el WAF de Cloudflare bloqueó con 403 un PNG por su contenido).
+// Safari no codifica WebP: devuelve PNG, también válido.
+async function toWebp(file: File) {
+  const bmp = await createImageBitmap(file); // falla si no es imagen
+  const src = new OffscreenCanvas(bmp.width, bmp.height);
+  const sctx = src.getContext("2d")!;
+  sctx.drawImage(bmp, 0, 0);
+  bmp.close();
+  // contorno = píxeles ni transparentes ni casi blancos (exportaciones con fondo blanco en vez de alfa)
+  const { data, width, height } = sctx.getImageData(0, 0, src.width, src.height);
+  let [x0, y0, x1, y1] = [width, height, -1, -1];
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      if (data[i + 3]! > 16 && !(data[i]! > 245 && data[i + 1]! > 245 && data[i + 2]! > 245)) {
+        x0 = Math.min(x0, x);
+        x1 = Math.max(x1, x);
+        y0 = Math.min(y0, y);
+        y1 = Math.max(y1, y);
+      }
+    }
+  if (x1 < 0) throw new Error("imagen vacía");
+  const [w, h] = [x1 - x0 + 1, y1 - y0 + 1];
+  const s = BOX / Math.max(w, h);
+  const canvas = new OffscreenCanvas(CANVAS, CANVAS);
+  const ctx = canvas.getContext("2d")!;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(src, x0, y0, w, h, (CANVAS - w * s) / 2, (CANVAS - h * s) / 2, w * s, h * s);
+  const blob = await canvas.convertToBlob({ type: "image/webp", quality: 0.85 });
+  return { file: new File([blob], file.name, { type: blob.type }), width: CANVAS, height: CANVAS };
+}
 
 // `from` = hex guardado en las variantes (solo grupos de variantes); nombre ES/EN se guarda en ProductVariant.colorName
 type Group = { key: string; hex: string; from?: string; nameEs?: string; nameEn?: string };
 // fila de la matriz color × talla; `group` = key del grupo de color (el hex puede cambiar al recolorear). Precio en soles, como se escribe
-type Row = { key: string; id?: string; group: string; size: string; sku: string; price: string; stock: string };
+// auto = SKU derivado de código + color + talla mientras no se edite a mano (solo filas nuevas: un SKU guardado no cambia)
+type Row = { key: string; id?: string; group: string; size: string; sku: string; price: string; stock: string; auto?: boolean };
 const sortRows = (rows: Row[]) => [...rows].sort((a, b) => rank(a.size) - rank(b.size));
 
 // Selector de color: paleta + nativo + HEX libre.
@@ -127,13 +166,16 @@ function ColorsPanel({
   const [bulk, setBulk] = useState({ price: "", stock: "" });
   const rowsOf = (key: string) => rows.filter((r) => r.group === key);
   const setRow = (key: string, patch: Partial<Row>) => setRows((cur) => cur.map((r) => (r.key === key ? { ...r, ...patch } : r)));
-  // SKU sugerido con la convención {código}-{inicial del color}-{talla} (AC04-C-M); se puede editar
-  const addSize = (g: Group, raw: string) => {
-    const size = raw.trim().toUpperCase();
-    if (!size || rowsOf(g.key).some((r) => r.size.toUpperCase() === size)) return;
-    const letter = (slugify(g.nameEs ?? "")[0] ?? "X").toUpperCase();
-    setRows((cur) => sortRows([...cur, { key: crypto.randomUUID(), group: g.key, size, sku: `${code}-${letter}-${size}`, price: cur[0]?.price ?? "", stock: "0" }]));
-  };
+  // SKU con la convención {código}-{inicial del color}-{talla} (AC04-C-M); se recalcula al cambiar nombre o talla hasta editarlo a mano
+  const skuOf = (g: Group, r: Row) => (r.auto ? `${code}-${(slugify(g.nameEs ?? "")[0] ?? "X").toUpperCase()}-${r.size.trim().toUpperCase()}` : r.sku);
+  // precio: el último del mismo color, si no el de cualquier talla, si no el de edición masiva
+  const addSizes = (g: Group, raw: string[]) =>
+    setRows((cur) => {
+      const mine = cur.filter((r) => r.group === g.key);
+      const price = mine.at(-1)?.price ?? cur[0]?.price ?? bulk.price;
+      const sizes = [...new Set(raw.map((s) => s.trim().toUpperCase()))].filter((s) => s && !mine.some((r) => r.size.toUpperCase() === s));
+      return sortRows([...cur, ...sizes.map((size) => ({ key: crypto.randomUUID(), group: g.key, size, sku: "", price, stock: "0", auto: true }))]);
+    });
   // grupos = colores de variantes + colores ya usados en fotos sin variante; "" = todos los colores
   const [groups, setGroups] = useState<Group[]>(() => {
     const known = colors.map((c) => ({ key: c.hex, hex: c.hex, from: c.hex, nameEs: c.nameEs, nameEn: c.nameEn }));
@@ -154,17 +196,17 @@ function ColorsPanel({
       setErrors([]);
       for (const file of files) {
         const data = new FormData();
-        data.set("file", file);
         try {
-          const bmp = await createImageBitmap(file); // ancho/alto para el layout de la galería (evita saltos)
-          data.set("width", String(bmp.width));
-          data.set("height", String(bmp.height));
-          bmp.close();
+          const img = await toWebp(file);
+          data.set("file", img.file);
+          data.set("width", String(img.width));
+          data.set("height", String(img.height));
         } catch {
           setErrors((e) => [...e, `${file.name}: ${t("errors.image_type")}`]);
           continue;
         }
-        const res = await uploadImage(productId, data);
+        // respuesta que no es de la action (p. ej. página 403 del WAF de Cloudflare): avisar en vez de romper
+        const res = await uploadImage(productId, data).catch(() => ({ ok: false as const, errors: ["image_upload"] }));
         if (res.ok) setImages((cur) => [...cur, { ...res.image, colorHex: hex || null }]);
         else setErrors((e) => [...e, ...res.errors.map((c) => `${file.name}: ${KNOWN_ERRORS.includes(c) ? t(`errors.${c}`) : c}`)]);
       }
@@ -352,8 +394,8 @@ function ColorsPanel({
                                     name="var.sku"
                                     required
                                     pattern={"[A-Za-z0-9][A-Za-z0-9\\-]{2,39}"}
-                                    value={r.sku}
-                                    onChange={(e) => setRow(r.key, { sku: e.target.value })}
+                                    value={skuOf(g, r)}
+                                    onChange={(e) => setRow(r.key, { sku: e.target.value, auto: false })}
                                     aria-label="SKU"
                                     className={`${input} data mt-0 uppercase`}
                                   />
@@ -376,8 +418,14 @@ function ColorsPanel({
                       </div>
                     )}
                     <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {/* atajo: XS–XXL de una vez (U = talla única, va sola) */}
+                      {SIZES.slice(0, -1).some((s) => !rowsOf(g.key).some((r) => r.size.toUpperCase() === s)) && (
+                        <button type="button" onClick={() => addSizes(g, SIZES.slice(0, -1))} className="data h-8 rounded-md border border-granito bg-glaciar px-3 text-xs font-semibold">
+                          + {t("allSizes")}
+                        </button>
+                      )}
                       {SIZES.filter((s) => !rowsOf(g.key).some((r) => r.size.toUpperCase() === s)).map((s) => (
-                        <button key={s} type="button" onClick={() => addSize(g, s)} className="data h-8 rounded-md border border-linea px-3 text-xs hover:border-granito">
+                        <button key={s} type="button" onClick={() => addSizes(g, [s])} className="data h-8 rounded-md border border-linea px-3 text-xs hover:border-granito">
                           + {s}
                         </button>
                       ))}
@@ -389,7 +437,7 @@ function ColorsPanel({
                         onKeyDown={(e) => {
                           if (e.key !== "Enter") return;
                           e.preventDefault();
-                          addSize(g, e.currentTarget.value);
+                          addSizes(g, [e.currentTarget.value]);
                           e.currentTarget.value = "";
                         }}
                         className={`${field} data mt-0 h-8 w-36 text-xs`}

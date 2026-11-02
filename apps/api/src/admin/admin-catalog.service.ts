@@ -9,6 +9,7 @@ import { slugify } from '../slugify.js';
 import type { AddImageDto, AdminProductsQuery, CreateProductDto, DeleteColorDto, SaveProductDto } from './admin-catalog.dto.js';
 
 const PAGE_SIZE = 10;
+const naturalOrder = new Intl.Collator('en', { numeric: true }); // compara los dígitos como números
 const LOCALES = ['es', 'en'] as const satisfies Locale[];
 
 // El cuerpo de los 409/422: { message: [códigos] }, igual que los 400 de validación.
@@ -41,15 +42,9 @@ export class AdminCatalogService {
       ...(series && { series: bySlug(series) }),
     };
     const name = { where: { locale }, select: { name: true } };
-
-    const [total, rows] = await this.prisma.$transaction([
-      this.prisma.product.count({ where }),
+    const find = (args: Pick<Prisma.ProductFindManyArgs, 'where' | 'orderBy' | 'skip' | 'take'>) =>
       this.prisma.product.findMany({
-        where,
-        // id desempata: sin él, dos productos con el mismo updatedAt pueden repetirse entre páginas
-        orderBy: sort === 'code' ? [{ code: 'asc' }] : [{ updatedAt: 'desc' }, { id: 'asc' }],
-        skip: (page - 1) * PAGE_SIZE,
-        take: PAGE_SIZE,
+        ...args,
         include: {
           translations: name,
           category: { include: { translations: name } },
@@ -57,8 +52,26 @@ export class AdminCatalogService {
           variants: { select: { priceCents: true, stock: true } },
           images: { orderBy: { sort: 'asc' }, take: 1, select: { r2Key: true } },
         },
-      }),
-    ]);
+      });
+
+    let total: number;
+    let rows: Awaited<ReturnType<typeof find>>;
+    if (sort === 'code') {
+      // orden natural (AW99 antes que AW100): SQL ordenaría como texto (AW10, AW100, AW11).
+      // ponytail: ordena todos los códigos en memoria; sobra para miles de productos, columna de orden en BD si crece
+      const codes = await this.prisma.product.findMany({ where, select: { id: true, code: true } });
+      codes.sort((a, b) => naturalOrder.compare(a.code, b.code));
+      total = codes.length;
+      const ids = codes.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((p) => p.id);
+      const found = await find({ where: { id: { in: ids } } });
+      rows = ids.flatMap((id) => found.filter((p) => p.id === id));
+    } else {
+      [total, rows] = await this.prisma.$transaction([
+        this.prisma.product.count({ where }),
+        // id desempata: sin él, dos productos con el mismo updatedAt pueden repetirse entre páginas
+        find({ where, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+      ]);
+    }
 
     return {
       total,

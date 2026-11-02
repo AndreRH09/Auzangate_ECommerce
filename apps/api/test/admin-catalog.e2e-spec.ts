@@ -140,8 +140,26 @@ describe('Admin de catálogo (e2e)', () => {
 
     it('valida formato de código, techSpecs y categoría', async () => {
       await put(original.id, input((p) => (p.code = 'XX1'))).expect(400);
+      await put(original.id, input((p) => (p.code = 'AC1000'))).expect(400); // máx. 3 dígitos
       await put(original.id, input((p) => (p.translations.en.techSpecs = { peso: 5 as unknown as string }))).expect(400);
       expect((await put(original.id, input((p) => (p.categoryId = 'no-existe'))).expect(400)).body.message).toEqual(['invalid_category']);
+    });
+
+    it('códigos de 3 dígitos en orden natural (AN97 antes que AN100)', async () => {
+      const prisma = app.get(PrismaService);
+      const temps = [];
+      for (const code of ['AN100', 'AN97']) {
+        const t = { name: `Temporal ${code}`, subtitle: '', description: '', techSpecs: {} };
+        const slug = code.toLowerCase();
+        temps.push(await prisma.product.create({
+          data: { code, categoryId: original.categoryId, translations: { create: [{ locale: 'es', slug: `temporal-${slug}`, ...t }, { locale: 'en', slug: `temp-${slug}`, ...t }] } },
+        }));
+      }
+      try {
+        expect((await list('&sort=code&q=Temporal%20AN')).items.map((p) => p.code)).toEqual(['AN97', 'AN100']);
+      } finally {
+        await prisma.product.deleteMany({ where: { id: { in: temps.map((p) => p.id) } } });
+      }
     });
 
     it('no publica sin variante con precio ni imagen con alt (RF-A08)', async () => {

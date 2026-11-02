@@ -154,6 +154,29 @@
     }
   }
 
+  /* Visor de fotos de la ficha: crece desde 96% con fundido al abrir, sale más rápido al cerrar */
+  dialog.zoom {
+    opacity: 0;
+    scale: 0.96;
+    transition:
+      opacity 200ms var(--ease-exit),
+      scale 200ms var(--ease-exit),
+      overlay 200ms allow-discrete,
+      display 200ms allow-discrete;
+  }
+  dialog.zoom[open] {
+    opacity: 1;
+    scale: 1;
+    transition-duration: 350ms;
+    transition-timing-function: var(--ease-fluid);
+  }
+  @starting-style {
+    dialog.zoom[open] {
+      opacity: 0;
+      scale: 0.96;
+    }
+  }
+
   /* Acordeones <details>: se despliegan en vez de saltar */
   details::details-content {
     block-size: 0;
