@@ -191,6 +191,7 @@
       "color_taken": "Dos colores no pueden tener el mismo HEX (para intercambiarlos, guarda en dos pasos).",
       "image_type": "formato no admitido (JPG, PNG, WebP o AVIF).",
       "image_size": "pesa más de 8 MB.",
+      "image_upload": "el servidor rechazó la subida (filtro de seguridad de Cloudflare o red). Prueba exportarla de nuevo o en otro formato.",
       "color_in_use": "No se puede eliminar: hay órdenes con variantes de este color.",
       "sku_taken": "Ese SKU ya existe (en este u otro producto).",
       "size_taken": "Una talla está repetida en el mismo color.",

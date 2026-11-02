@@ -23,6 +23,7 @@ export const KNOWN_ERRORS = [
   "color_in_use",
   "image_type",
   "image_size",
+  "image_upload",
   "sku_taken",
   "size_taken",
   "need_color_name",
@@ -72,6 +73,19 @@ function SpecsEditor({ locale: l, initial }: { locale: Locale; initial: Record<s
 const PRESETS = ["#262527", "#606263", "#E6E8E8", "#FFFFFF", "#9E1B32", "#E9E3D6", "#2F4A3A", "#1F3A5F"];
 const HEX = /^#[0-9A-F]{6}$/;
 export const MIN_PHOTOS = 3;
+const MAX_SIDE = 2400; // px del lado mayor; sobra para el zoom de la ficha
+
+// Re-codifica en el navegador a WebP (transparencia incluida): pesa ~10× menos que un PNG y cambia los bytes
+// (el WAF de Cloudflare bloqueó con 403 un PNG por su contenido). Safari no codifica WebP: devuelve PNG, también válido.
+async function toWebp(file: File) {
+  const bmp = await createImageBitmap(file); // falla si no es imagen
+  const scale = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height));
+  const canvas = new OffscreenCanvas(Math.round(bmp.width * scale), Math.round(bmp.height * scale));
+  canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  bmp.close();
+  const blob = await canvas.convertToBlob({ type: "image/webp", quality: 0.85 });
+  return { file: new File([blob], file.name, { type: blob.type }), width: canvas.width, height: canvas.height };
+}
 
 // `from` = hex guardado en las variantes (solo grupos de variantes); nombre ES/EN se guarda en ProductVariant.colorName
 type Group = { key: string; hex: string; from?: string; nameEs?: string; nameEn?: string };
@@ -154,17 +168,17 @@ function ColorsPanel({
       setErrors([]);
       for (const file of files) {
         const data = new FormData();
-        data.set("file", file);
         try {
-          const bmp = await createImageBitmap(file); // ancho/alto para el layout de la galería (evita saltos)
-          data.set("width", String(bmp.width));
-          data.set("height", String(bmp.height));
-          bmp.close();
+          const img = await toWebp(file);
+          data.set("file", img.file);
+          data.set("width", String(img.width));
+          data.set("height", String(img.height));
         } catch {
           setErrors((e) => [...e, `${file.name}: ${t("errors.image_type")}`]);
           continue;
         }
-        const res = await uploadImage(productId, data);
+        // respuesta que no es de la action (p. ej. página 403 del WAF de Cloudflare): avisar en vez de romper
+        const res = await uploadImage(productId, data).catch(() => ({ ok: false as const, errors: ["image_upload"] }));
         if (res.ok) setImages((cur) => [...cur, { ...res.image, colorHex: hex || null }]);
         else setErrors((e) => [...e, ...res.errors.map((c) => `${file.name}: ${KNOWN_ERRORS.includes(c) ? t(`errors.${c}`) : c}`)]);
       }

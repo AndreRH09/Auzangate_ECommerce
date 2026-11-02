@@ -191,6 +191,7 @@
       "color_taken": "Two colors can't share the same HEX (to swap them, save in two steps).",
       "image_type": "unsupported format (JPG, PNG, WebP or AVIF).",
       "image_size": "is larger than 8 MB.",
+      "image_upload": "the server rejected the upload (Cloudflare security filter or network). Try exporting it again or in another format.",
       "color_in_use": "Can't delete: there are orders with variants of this color.",
       "sku_taken": "That SKU already exists (in this or another product).",
       "size_taken": "A size is repeated within the same color.",
