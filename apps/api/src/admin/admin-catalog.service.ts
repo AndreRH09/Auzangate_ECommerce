@@ -290,7 +290,8 @@ export class AdminCatalogService {
             },
           },
         });
-      });
+        // ponytail: una consulta por color/variante/foto; Render→Aiven no entra en los 5 s por defecto (P2028). Si crece, agrupar en SQL
+      }, { timeout: 20_000 });
     } catch (e) {
       throw this.saveError(e);
     }
