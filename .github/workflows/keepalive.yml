@@ -1,26 +1,58 @@
 name: keepalive
 
-# Aiven (plan gratis) apaga la BD tras un tiempo sin actividad; un SELECT 1 periódico la mantiene encendida.
-# Alertas = correo de GitHub cuando este workflow falla (Settings > Notifications > Actions: "only failures"):
-#  - ping: la API/BD no respondió (Aiven apagado, Render caído).
-#  - inactividad: GitHub desactiva los cron tras 60 días sin commits; avisa desde el día 45.
+# Aiven (plan gratis) apaga la BD por inactividad y un SELECT 1 periódico no lo impidió (apagada el 23/10 con ping cada 6 h).
+# Por eso cada corrida: 1) consulta Aiven por su API y, si está apagado, lo enciende; 2) comprueba API + BD con /health/db.
+# Secrets de repo (no del environment production, para no crear un deployment en cada corrida):
+#   AIVEN_TOKEN   token personal de Aiven (User profile > Tokens)
+#   AIVEN_PROJECT nombre del proyecto en Aiven
+#   AIVEN_SERVICE nombre del servicio MySQL
+# Alertas = correo de GitHub cuando este workflow falla (Settings > Notifications > Actions: "only failures").
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    # minutos fuera de :00, que GitHub retrasa o salta con carga
+    - cron: "17 */3 * * *"   # ping
+    - cron: "43 13 * * *"    # control de inactividad, 1 vez al día
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
 
 jobs:
   ping:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '17 */3 * * *'
     runs-on: ubuntu-latest
-    # URL pública fija: vars.API_URL vive en el environment production y usarlo crearía un deployment cada 6 h
+    timeout-minutes: 25
+    # URL pública fija: vars.API_URL vive en el environment production y usarlo crearía un deployment cada corrida
     env:
       API_URL: https://auzangate-api.onrender.com
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Aiven encendido
+        env:
+          AIVEN_TOKEN: ${{ secrets.AIVEN_TOKEN }}
+          AIVEN_PROJECT: ${{ secrets.AIVEN_PROJECT }}
+          AIVEN_SERVICE: ${{ secrets.AIVEN_SERVICE }}
+        run: bash .github/scripts/aiven-encender.sh
+
       # reintenta: la instancia free de Render tarda en despertar
       - name: API y BD responden
-        run: for i in $(seq 1 12); do curl -fsS "$API_URL/health/db" && exit 0; sleep 10; done; echo "::error::/health/db no respondió (¿Aiven apagado?)"; exit 1
+        run: |
+          for i in $(seq 1 18); do
+            curl -fsS --max-time 30 "$API_URL/health/db" && exit 0
+            sleep 10
+          done
+          echo "::error::/health/db no respondió (Render caído o la API no reconecta con Aiven)"
+          exit 1
 
   inactividad:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '43 13 * * *'
     runs-on: ubuntu-latest
     steps:
       - name: Último commit hace menos de 45 días
