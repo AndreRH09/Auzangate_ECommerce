@@ -1,7 +1,7 @@
 "use server";
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { refresh, updateTag } from "next/cache";
+import { refresh, revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
@@ -104,7 +104,7 @@ export async function saveProduct(id: string, _: SaveState, form: FormData): Pro
   };
   try {
     const product = await adminApi<AdminProduct>(`/products/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(body) });
-    updateTag("catalog"); // todos los fetch de la tienda llevan este tag (lib/api.ts)
+    revalidateTag("catalog", "max"); // tag de todos los fetch de la tienda (lib/api.ts). "max" = sirve la copia vieja mientras regenera: con updateTag la caché caducaba y, si Render dormía, la siguiente visita daba 500
     return { ok: true, product };
   } catch (e) {
     if (e instanceof AdminApiError) return { ok: false, errors: e.messages };
@@ -144,7 +144,7 @@ export async function deleteProduct(id: string): Promise<ErrorState> {
     if (e instanceof AdminApiError) return { ok: false, errors: e.messages };
     throw e;
   }
-  updateTag("catalog");
+  revalidateTag("catalog", "max");
   redirect(`/${await getLocale()}/admin/productos`);
 }
 
@@ -156,7 +156,7 @@ async function taxonomy(path: string, method: "POST" | "PUT" | "DELETE", body?: 
     if (e instanceof AdminApiError) return { ok: false, errors: e.messages };
     throw e;
   }
-  updateTag("catalog");
+  revalidateTag("catalog", "max");
   refresh();
   return null;
 }
@@ -214,7 +214,7 @@ export async function deleteImage(productId: string, imageId: string) {
   const { r2Key } = await adminApi<{ r2Key: string }>(`/products/${encodeURIComponent(productId)}/images/${encodeURIComponent(imageId)}`, { method: "DELETE" });
   // las fotos del seed son rutas del front o URLs externas, no están en R2
   if (r2Key.startsWith("products/")) await (await getCloudflareContext({ async: true })).env.MEDIA.delete(r2Key);
-  updateTag("catalog"); // la tienda no debe seguir apuntando al archivo borrado
+  revalidateTag("catalog", "max"); // ponytail: la 1.ª visita aún ve la foto borrada (rota) mientras regenera; aceptable frente a un 500
 }
 
 // Borra un color: variantes + fotos en la API (una transacción) y después sus archivos de R2.
@@ -223,7 +223,7 @@ export async function deleteColor(productId: string, body: AdminColorDelete): Pr
     const { r2Keys } = await adminApi<{ r2Keys: string[] }>(`/products/${encodeURIComponent(productId)}/colors`, { method: "DELETE", body: JSON.stringify(body) });
     const { env } = await getCloudflareContext({ async: true });
     await Promise.all(r2Keys.filter((k) => k.startsWith("products/")).map((k) => env.MEDIA.delete(k)));
-    updateTag("catalog");
+    revalidateTag("catalog", "max");
     return { ok: true };
   } catch (e) {
     if (e instanceof AdminApiError) return { ok: false, errors: e.messages };
