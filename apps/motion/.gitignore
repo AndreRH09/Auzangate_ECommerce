@@ -1,0 +1,3 @@
+out/
+# clips de stock: se descargan con `pnpm --filter motion clips` (procedencia en clips.json)
+public/clips/

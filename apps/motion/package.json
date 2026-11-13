@@ -1,0 +1,23 @@
+{
+  "name": "motion",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio",
+    "typecheck": "tsc --noEmit",
+    "clips": "node scripts/fetch-clips.mjs",
+    "publish:local": "node scripts/publish.mjs --local",
+    "publish:remote": "node scripts/publish.mjs --remote"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.543",
+    "@remotion/google-fonts": "4.0.543",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.543"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "typescript": "^5"
+  }
+}
