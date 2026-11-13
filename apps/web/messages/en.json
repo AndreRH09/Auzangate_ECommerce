@@ -271,5 +271,14 @@
     "childCount": "{count, plural, =0 {no subcategories} one {# subcategory} other {# subcategories}}",
     "seriesPlural": "Series",
     "seriesHint": "The 5 brand series cannot be created or deleted: their code sets the product code letter and their patch. The first sentence of the description is the line the store shows."
+  },
+  "Series": {
+    "techEyebrow": "01 · Technology",
+    "techTitle": "What's inside",
+    "conditionsEyebrow": "02 · Conditions",
+    "productsTitle": "The series",
+    "shopMen": "Shop men",
+    "shopWomen": "Shop women",
+    "seeSeries": "See the series"
   }
 }

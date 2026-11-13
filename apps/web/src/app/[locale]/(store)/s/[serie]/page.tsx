@@ -6,6 +6,8 @@ import { getSeries } from "@/lib/api";
 import { Breadcrumb } from "@/components/seo/Breadcrumb";
 import { BrandMark, type BrandAsset } from "@/components/ui/BrandMark";
 import { pageMeta } from "@/lib/seo";
+import { getSeriesIdentity } from "@/lib/series-identity";
+import { SeriesIdentity } from "@/components/series/SeriesIdentity";
 
 async function find(locale: Locale, slug: string) {
   return (await getSeries(locale)).find((s) => s.slug === slug) ?? notFound();
@@ -28,7 +30,34 @@ export default async function SeriesPage({ params, searchParams }: PageProps<"/[
   const { locale: raw, serie } = await params;
   const locale = raw as Locale;
   setRequestLocale(locale);
-  const [s, t, th] = await Promise.all([find(locale, serie), getTranslations("Listing"), getTranslations("Header")]);
+  const [s, t, th, ts] = await Promise.all([find(locale, serie), getTranslations("Listing"), getTranslations("Header"), getTranslations("Series")]);
+  const breadcrumb = (
+    <Breadcrumb
+      locale={locale}
+      items={[
+        { name: th("home"), href: "/" },
+        { name: t("series", { name: s.name }), href: `/s/${s.slug}` },
+      ]}
+    />
+  );
+
+  // serie con identidad de sub-marca (por ahora Wari): secciones de marca arriba y el listado debajo, en #productos
+  const identity = getSeriesIdentity(s.code, locale);
+  if (identity) {
+    return (
+      <main>
+        <SeriesIdentity identity={identity} code={s.code} slug={s.slug} breadcrumb={breadcrumb} />
+        <ProductListing
+          locale={locale}
+          path={`/s/${s.slug}`}
+          base={{ series: s.slug }}
+          params={(await searchParams) as ListingParams}
+          title={ts("productsTitle")}
+          belowIdentity
+        />
+      </main>
+    );
+  }
 
   return (
     <ProductListing
@@ -43,15 +72,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps<"/[
           <p className="text-pizarra">{s.description}</p>
         </div>
       }
-      breadcrumb={
-        <Breadcrumb
-          locale={locale}
-          items={[
-            { name: th("home"), href: "/" },
-            { name: t("series", { name: s.name }), href: `/s/${s.slug}` },
-          ]}
-        />
-      }
+      breadcrumb={breadcrumb}
     />
   );
 }

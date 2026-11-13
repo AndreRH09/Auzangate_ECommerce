@@ -271,5 +271,14 @@
     "childCount": "{count, plural, =0 {sin subcategorías} one {# subcategoría} other {# subcategorías}}",
     "seriesPlural": "Series",
     "seriesHint": "Las 5 series de marca no se crean ni se borran: su código define la letra del código de producto y su parche. La primera frase de la descripción es la línea que muestra la tienda."
+  },
+  "Series": {
+    "techEyebrow": "01 · Tecnología",
+    "techTitle": "Lo que va por dentro",
+    "conditionsEyebrow": "02 · Condiciones",
+    "productsTitle": "La serie",
+    "shopMen": "Comprar hombre",
+    "shopWomen": "Comprar mujer",
+    "seeSeries": "Ver la serie"
   }
 }
