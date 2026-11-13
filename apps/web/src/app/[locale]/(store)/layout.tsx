@@ -6,7 +6,7 @@ import type { Locale } from "@/i18n/routing";
 
 // Tienda: barra superior, header y footer. El grupo (store) no aparece en la URL.
 export default async function StoreLayout({ children, params }: LayoutProps<"/[locale]">) {
-  const locale = (await params).locale as Locale; // validado en el layout raíz
+  const locale = (await params).locale as Locale; // el layout raíz y lib/api lo validan
   setRequestLocale(locale);
 
   return (
