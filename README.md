@@ -34,7 +34,10 @@ Monorepo con pnpm workspaces + Turborepo.
 - [x] API: catálogo (categorías, series, productos con filtros/búsqueda, sitemap) y newsletter
 - [x] Web: home, listados (categoría, serie, búsqueda), ficha de producto con galería por color, SEO (sitemap, robots, JSON-LD)
 - [x] Auth del admin: login con JWT en cookie httpOnly (BFF), rate limit en login y newsletter
-- [ ] Admin de catálogo, imágenes en R2, revalidación, deploy (resto de F1)
+- [x] Admin de catálogo: productos (alta, edición, baja, variantes), categorías y series, dashboard
+- [x] Fotos en R2 subidas desde el admin (WebP), caché incremental de OpenNext en R2 + tags en D1
+- [x] Deploy: `deploy.yml` (push a `main`) → migraciones, API en Render, worker en Cloudflare; `keepalive.yml` cada 6 h
+- [ ] `seo.yml` + Lighthouse (resto de F1)
 
 Detalle, decisiones y riesgos al escalar: [docs/PLAN-DE-TRABAJO.md](docs/PLAN-DE-TRABAJO.md).
 
@@ -108,6 +111,19 @@ pnpm --filter api exec prisma migrate reset
 pnpm db:seed
 ```
 
+## Producción
+
+| Pieza | Dónde |
+|---|---|
+| Tienda + admin | Cloudflare Workers: https://auzangate-web.andreahrenzo.workers.dev |
+| API | Render (plan free): https://auzangate-api.onrender.com (`/health/db` = API + BD) |
+| BD | MySQL en Aiven (plan free) |
+
+- Se despliega al fusionar en `main` (`.github/workflows/deploy.yml`).
+- `keepalive.yml` hace ping a `/health/db` cada 6 h para que Aiven no apague la BD. **No** evita que Render se duerma (lo hace a los 15 min sin tráfico; despertar tarda ~30-60 s).
+- La tienda aguanta a Render dormido así: los `fetch` del catálogo se cachean 1 h en R2 y, al vencer, se sirve la copia vieja mientras se regenera; el admin invalida con `revalidateTag("catalog", "max")` (no `updateTag`, que caduca la caché y obliga a esperar a Render); si aun así hay que ir a la API, `lib/api.ts` reintenta 3 veces cada 5 s.
+- Logs en vivo: `pnpm --filter web exec wrangler tail`.
+
 ## Despliegue con Docker (prueba local del stack de producción)
 
 ```powershell
@@ -124,7 +140,7 @@ En producción MySQL no publica puertos: solo la API (3000) es accesible. `-p au
 - Categorías por tipo de prenda (Casacas, Capas, Pantalones, Accesorios), sin nivel Hombre/Mujer.
 - Nombre: `{Tipo} {código}` (por ejemplo, `Casaca FAW01`), sin nombre de modelo.
 - SKU: `{código}-{color}-{talla}`, con color de 1 letra (`C` Carbón, `R` Roca, `V` Musgo, `A` Arcilla; nunca `F`). Ejemplo: `AC04-C-M`.
-- Fotos (temporal, hasta R2): `apps/web/public/products/{código}/{color}/{front,rear,side}.png` y registradas en `REAL_PHOTOS` de `apps/api/prisma/seeds/catalog.ts`. Una foto sin color (`colorHex` null) se muestra con todos los colores.
+- Fotos: se suben desde el editor del admin (el navegador las pasa a WebP) al bucket R2 `auzangate-media` y se sirven en `/media/*` del worker. Mínimo 3 por color para publicar. Una foto sin color (`colorHex` null) se muestra con todos los colores. Solo el seed usa `apps/web/public/products/{código}/{color}/…` (`REAL_PHOTOS` en `apps/api/prisma/seeds/catalog.ts`).
 
 Si cambias productos del seed, actualiza los conteos de `apps/api/test/catalog.e2e-spec.ts`.
 
