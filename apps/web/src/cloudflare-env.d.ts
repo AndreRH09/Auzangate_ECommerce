@@ -3,7 +3,16 @@
 interface CloudflareEnv {
   MEDIA: {
     put(key: string, value: ArrayBuffer, options?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
-    get(key: string): Promise<{ body: ReadableStream; httpEtag: string; httpMetadata?: { contentType?: string } } | null>;
+    get(
+      key: string,
+      options?: { range?: Headers },
+    ): Promise<{
+      body: ReadableStream;
+      httpEtag: string;
+      size: number;
+      range?: import("@/lib/range").R2Range;
+      httpMetadata?: { contentType?: string };
+    } | null>;
     delete(key: string): Promise<void>;
   };
 }
