@@ -1,0 +1,22 @@
+{
+  "WariExpedition": {
+    "video": "/media/series/wari/wari-expedition-dc6b638b.mp4",
+    "poster": "/media/series/wari/wari-expedition-dc6b638b.jpg"
+  },
+  "WariWeather": {
+    "video": "/media/series/wari/wari-weather-9568706e.mp4",
+    "poster": "/media/series/wari/wari-weather-9568706e.jpg"
+  },
+  "WariTechMembrane": {
+    "video": "/media/series/wari/wari-tech-membrane-eaab1e0b.mp4",
+    "poster": "/media/series/wari/wari-tech-membrane-eaab1e0b.jpg"
+  },
+  "WariTechDown": {
+    "video": "/media/series/wari/wari-tech-down-c71bbf13.mp4",
+    "poster": "/media/series/wari/wari-tech-down-c71bbf13.jpg"
+  },
+  "WariTechReinforcement": {
+    "video": "/media/series/wari/wari-tech-reinforcement-f591e0e8.mp4",
+    "poster": "/media/series/wari/wari-tech-reinforcement-f591e0e8.jpg"
+  }
+}
