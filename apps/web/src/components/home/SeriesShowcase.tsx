@@ -4,7 +4,7 @@ import type { Series } from "@/lib/api";
 import { BrandMark, type BrandAsset } from "../ui/BrandMark";
 
 // Paisajes 720 × 1280 (9:16), en el orden de las series. Se recortan a 2:5 en desktop y a cuadrado en mobile.
-const PHOTOS = ["/layout/1arequipa.webp", "/layout/2ausangate.webp", "/layout/3lima.webp", "/layout/4huaccachina.webp", "/layout/5ballestas.webp"];
+const PHOTOS = ["/layout/1arequipa.webp", "/layout/2ausangate.webp", "/layout/3lima.webp", "/layout/5ballestas.webp", "/layout/4huaccachina.webp"];
 
 // Banda de series a sangre en plomo: cinco paisajes separados por líneas de granito, cada uno con su
 // parche blanco abajo. La silueta de cordillera (layout/superior.png, 669 × 135) corta el borde superior
