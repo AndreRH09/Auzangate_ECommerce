@@ -1,5 +1,5 @@
 // Renderiza los videos de la serie, los sube a R2 (bucket MEDIA) con nombre hasheado y escribe el manifiesto que lee la web.
-// Uso: pnpm --filter motion publish:local   (bucket local de `next dev`, .wrangler/state de apps/web)
+// Uso: pnpm --filter motion publish:local [ids…]   (bucket local de `next dev`, .wrangler/state de apps/web)
 //      pnpm --filter motion publish:remote  (producción)
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -19,7 +19,12 @@ const VIDEOS = {
   WariTechMembrane: 1 * MB,
   WariTechDown: 1 * MB,
   WariTechReinforcement: 1 * MB,
+  WariTechMembraneReal: 1 * MB,
+  WariTechDownReal: 1 * MB,
+  WariTechReinforcementReal: 1 * MB,
 };
+// ids sueltos tras las flags (publish:local WariTechDownReal) = solo esos; sin ids, todos
+const only = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 
 const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: ["ignore", "ignore", "inherit"], shell: process.platform === "win32" });
 const kebab = (id) => id.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
@@ -29,7 +34,7 @@ const put = (key, file, type) =>
 mkdirSync(`${motion}out`, { recursive: true });
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 
-for (const [id, limit] of Object.entries(VIDEOS)) {
+for (const [id, limit] of Object.entries(VIDEOS).filter(([id]) => !only.length || only.includes(id))) {
   const mp4 = `${motion}out/${id}.mp4`;
   const poster = `${motion}out/${id}.jpg`; // still de una composición con video: solo png/jpeg
   // concurrency=1: con varios hilos el compositor de Remotion falla en Windows ("No frame found") con los clips de video.

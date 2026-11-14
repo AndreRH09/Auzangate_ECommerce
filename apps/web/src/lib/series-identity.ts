@@ -25,9 +25,9 @@ const WARI: Record<Locale, SeriesIdentity> = {
     expedition: { title: "Expedición", line: "Para el viento, la altura y el frío seco del altiplano.", media: m("WariExpedition") },
     positioning: "Wari es la línea de expedición de Auzangate: montañismo y outdoor exigente. Prendas técnicas pensadas desde la altura del apu, 6384 metros, para quien no toma el camino fácil.",
     tech: [
-      { title: "MEMBRANA 20K", body: "Nylon de 2 capas con membrana impermeable de 20 000 mm que deja salir el vapor.", media: m("WariTechMembrane") },
-      { title: "PLUMA 650", body: "Más aire atrapado por gramo: más calor con menos peso dentro de la mochila.", media: m("WariTechDown") },
-      { title: "REFUERZOS", body: "Tejido doble en rodillas y bajos, donde la roca y los crampones desgastan primero.", media: m("WariTechReinforcement") },
+      { title: "MEMBRANA 20K", body: "Nylon de 2 capas con membrana impermeable de 20 000 mm que deja salir el vapor.", media: m("WariTechMembraneReal") },
+      { title: "PLUMA 650", body: "Más aire atrapado por gramo: más calor con menos peso dentro de la mochila.", media: m("WariTechDownReal") },
+      { title: "REFUERZOS", body: "Tejido doble en rodillas y bajos, donde la roca y los crampones desgastan primero.", media: m("WariTechReinforcementReal") },
     ],
     conditions: {
       title: "Lluvia. Nieve. Ventisca.",
@@ -47,9 +47,9 @@ const WARI: Record<Locale, SeriesIdentity> = {
     expedition: { title: "Expedition", line: "Built for wind, altitude and the dry cold of the high Andes.", media: m("WariExpedition") },
     positioning: "Wari is Auzangate's expedition line: mountaineering and demanding outdoors. Technical gear designed from the height of the apu, 6384 meters, for those who never take the easy way.",
     tech: [
-      { title: "20K MEMBRANE", body: "2-layer nylon with a 20,000 mm waterproof membrane that lets vapor out.", media: m("WariTechMembrane") },
-      { title: "650 DOWN", body: "More air trapped per gram: more warmth with less weight in your pack.", media: m("WariTechDown") },
-      { title: "REINFORCEMENTS", body: "Double fabric at the knees and hems, where rock and crampons wear first.", media: m("WariTechReinforcement") },
+      { title: "20K MEMBRANE", body: "2-layer nylon with a 20,000 mm waterproof membrane that lets vapor out.", media: m("WariTechMembraneReal") },
+      { title: "650 DOWN", body: "More air trapped per gram: more warmth with less weight in your pack.", media: m("WariTechDownReal") },
+      { title: "REINFORCEMENTS", body: "Double fabric at the knees and hems, where rock and crampons wear first.", media: m("WariTechReinforcementReal") },
     ],
     conditions: {
       title: "Rain. Snow. Blizzard.",

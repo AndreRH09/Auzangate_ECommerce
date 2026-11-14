@@ -18,5 +18,17 @@
   "WariTechReinforcement": {
     "video": "/media/series/wari/wari-tech-reinforcement-f591e0e8.mp4",
     "poster": "/media/series/wari/wari-tech-reinforcement-f591e0e8.jpg"
+  },
+  "WariTechMembraneReal": {
+    "video": "/media/series/wari/wari-tech-membrane-real-98d35b60.mp4",
+    "poster": "/media/series/wari/wari-tech-membrane-real-98d35b60.jpg"
+  },
+  "WariTechDownReal": {
+    "video": "/media/series/wari/wari-tech-down-real-f7435427.mp4",
+    "poster": "/media/series/wari/wari-tech-down-real-f7435427.jpg"
+  },
+  "WariTechReinforcementReal": {
+    "video": "/media/series/wari/wari-tech-reinforcement-real-4f683845.mp4",
+    "poster": "/media/series/wari/wari-tech-reinforcement-real-4f683845.jpg"
   }
 }
