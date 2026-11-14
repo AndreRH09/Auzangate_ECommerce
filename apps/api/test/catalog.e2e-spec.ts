@@ -6,7 +6,7 @@ import { AppModule } from '../src/app.module.js';
 import { CARD_PHOTOS_PER_COLOR } from '../src/catalog/catalog.service.js';
 import { setupApp } from '../src/setup.js';
 
-// Requiere el catálogo del seed (pnpm db:seed catalog): 13 productos unisex, 1 en borrador (Pantalón AV02).
+// Requiere el catálogo del seed (pnpm db:seed catalog): 14 productos unisex, 1 en borrador (Pantalón AV02).
 describe('Catálogo (e2e)', () => {
   let app: INestApplication<App>;
   const get = (url: string) => request(app.getHttpServer()).get(url);
@@ -28,7 +28,7 @@ describe('Catálogo (e2e)', () => {
 
   it('listado: solo publicados, paginado por cursor', async () => {
     const all = await get('/v1/products?locale=es').expect(200);
-    expect(all.body.total).toBe(12);
+    expect(all.body.total).toBe(13);
 
     const page = await get('/v1/products?locale=es&limit=5').expect(200);
     expect(page.body.items).toHaveLength(5);
@@ -50,20 +50,20 @@ describe('Catálogo (e2e)', () => {
 
   it('filtro por categoría; orden por precio', async () => {
     const { body } = await get('/v1/products?locale=es&category=casacas&sort=price_asc').expect(200);
-    expect(body.total).toBe(4);
+    expect(body.total).toBe(5);
     const prices = body.items.map((p: { priceCents: number }) => p.priceCents);
     expect(prices).toEqual([...prices].sort((a, b) => a - b));
   });
 
   it('filtros de serie, talla y búsqueda', async () => {
-    expect((await get('/v1/products?locale=es&series=wari').expect(200)).body.total).toBe(3);
-    expect((await get('/v1/products?locale=es&size=XS').expect(200)).body.total).toBe(8);
+    expect((await get('/v1/products?locale=es&series=wari').expect(200)).body.total).toBe(4);
+    expect((await get('/v1/products?locale=es&size=XS').expect(200)).body.total).toBe(9);
     expect((await get('/v1/products?locale=en&q=aw01').expect(200)).body.total).toBe(1);
   });
 
   it('Hombre y Mujer incluyen lo unisex', async () => {
-    expect((await get('/v1/products?locale=es&gender=men').expect(200)).body.total).toBe(12);
-    expect((await get('/v1/products?locale=es&gender=women').expect(200)).body.total).toBe(12);
+    expect((await get('/v1/products?locale=es&gender=men').expect(200)).body.total).toBe(13);
+    expect((await get('/v1/products?locale=es&gender=women').expect(200)).body.total).toBe(13);
     await get('/v1/products?gender=kids').expect(400);
   });
 
@@ -82,7 +82,7 @@ describe('Catálogo (e2e)', () => {
 
   it('feed del sitemap', async () => {
     const { body } = await get('/v1/catalog/sitemap').expect(200);
-    expect(body.products).toHaveLength(12);
+    expect(body.products).toHaveLength(13);
     expect(body.products[0].slugs).toHaveProperty('en');
   });
 });
