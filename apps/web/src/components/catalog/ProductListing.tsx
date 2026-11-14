@@ -24,6 +24,7 @@ export async function ProductListing({
   breadcrumb,
   title,
   intro,
+  belowIdentity = false,
 }: {
   locale: Locale;
   path: string;
@@ -33,6 +34,8 @@ export async function ProductListing({
   title: string;
   /** bloque a la derecha del título (p. ej. parche y descripción de la serie) */
   intro?: ReactNode;
+  /** debajo de la identidad de serie: el h1 ya está arriba, así que el título baja a h2 y la sección es el ancla #productos */
+  belowIdentity?: boolean;
 }) {
   const t = await getTranslations("Listing");
   // la URL es input del usuario: lo que no calce se ignora (la API respondería 400 y la página 500)
@@ -62,11 +65,13 @@ export async function ProductListing({
   const active = [gender, size, color, min, max].filter(Boolean).length + (sort && sort !== "new" ? 1 : 0);
   const clearHref = href({ sort: undefined, gender: undefined, size: undefined, color: undefined, min: undefined, max: undefined, cursor: undefined });
 
+  const Root = belowIdentity ? "section" : "main";
+  const Title = belowIdentity ? "h2" : "h1";
   return (
-    <main className="mx-auto max-w-[1600px] px-4 pt-6 md:px-8">
+    <Root id={belowIdentity ? "productos" : undefined} className="mx-auto max-w-[1600px] scroll-mt-header px-4 pt-6 md:px-8">
       {breadcrumb}
       <div className="mt-6 grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
-        <h1 className="display text-[clamp(40px,6vw,96px)]">{title}</h1>
+        <Title className="display text-[clamp(40px,6vw,96px)]">{title}</Title>
         {intro}
       </div>
 
@@ -105,6 +110,6 @@ export async function ProductListing({
         current={{ sort, gender, size, color, min, max }}
         clearHref={clearHref}
       />
-    </main>
+    </Root>
   );
 }

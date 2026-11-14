@@ -1,4 +1,4 @@
-// Catálogo: series, categorías y 13 productos ES/EN, todos unisex.
+// Catálogo: series, categorías y 14 productos ES/EN, todos unisex.
 // Los precios, specs y stocks son DATOS DE EJEMPLO, no fichas reales.
 import { ProductStatus, type Locale } from '../../src/generated/prisma/client.js';
 import { slugify } from '../../src/slugify.js';
@@ -34,6 +34,7 @@ const COLORS = [
   { code: 'R', hex: '#8A8D8F', name: { es: 'Roca', en: 'Rock' } },
   { code: 'V', hex: '#4B5D44', name: { es: 'Musgo', en: 'Moss' } },
   { code: 'A', hex: '#9C6B4E', name: { es: 'Arcilla', en: 'Clay' } },
+  { code: 'G', hex: '#566A82', name: { es: 'Glaciar', en: 'Glacier' } }, // AW04: mediana de los paneles azules de sus fotos
 ];
 
 // Convención de nombres: "{Tipo} {código}", sin nombre de modelo ni adjetivos.
@@ -54,6 +55,7 @@ const APPAREL: Line[] = [
   ['AN02', 'Polo', 'Tee', 'capas', 'NASCA', 119, 'Merino 150 g/m²', 'Merino 150 g/m²', { peso: '140 g', gramaje: '150 g/m²', fibra: 'Merino 87 %' }],
   ['AV02', 'Pantalón', 'Pants', 'pantalones', 'VICUS', 279, 'Stretch 4 vías · UPF 50', '4-way stretch · UPF 50', { peso: '340 g', protección: 'UPF 50' }],
   ['AC04', 'Polo', 'Tee', 'capas', 'CARAL', 99, 'Algodón 180 g/m²', 'Cotton 180 g/m²', { peso: '180 g', fibra: 'Algodón 100 %' }],
+  ['AW04', 'Casaca', 'Jacket', 'casacas', 'WARI', 549, 'Shell 3 capas · corte holgado', '3-layer shell · loose fit', { peso: '450 g', calce: 'Holgado', impermeabilidad: '20 000 mm' }],
 ];
 
 // [código, tipo ES, tipo EN, serie, precio S/, subtítulo ES, subtítulo EN, specs]
@@ -78,6 +80,7 @@ const REAL_PHOTOS: Record<string, Photo[]> = {
   AC04: COLORS.filter((c) => 'CRV'.includes(c.code)).flatMap((c) =>
     VIEWS.map((v) => ({ key: `/products/AC04/${c.code}/${v}.png`, width: 1024, height: 1024, colorHex: c.hex })), // cuadradas
   ),
+  AW04: VIEWS.map((v) => ({ key: `/products/AW04/G/${v}.png`, width: 1152, height: 1536, colorHex: '#566A82' })),
 };
 
 
