@@ -17,7 +17,7 @@ export async function SeriesIdentity({ identity: id, code, slug, breadcrumb }: {
     <>
       <div className="mx-auto max-w-[1600px] px-4 pt-6 md:px-8">
         {breadcrumb}
-        <h1 className="mt-3 text-2xl font-medium">{id.heading}</h1>
+        <h1 className="sr-only">{id.heading}</h1> {/* oculto: el manifiesto hace de titular visual; el h1 queda para SEO y lectores */}
         <div className="flex flex-wrap items-end gap-6 pt-14 pb-16 md:gap-10 md:pt-18 md:pb-20">
           <BrandMark asset={patch} label={`6384 · ${code}`} className="w-20 shrink-0 md:w-30" />
           <p className="display text-[clamp(44px,7vw,112px)] whitespace-pre-line normal-case" style={{ lineHeight: 0.8 }}>
