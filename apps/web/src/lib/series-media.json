@@ -30,5 +30,25 @@
   "WariTechReinforcementReal": {
     "video": "/media/series/wari/wari-tech-reinforcement-real-4f683845.mp4",
     "poster": "/media/series/wari/wari-tech-reinforcement-real-4f683845.jpg"
+  },
+  "VicusExpedition": {
+    "video": "/media/series/vicus/vicus-expedition-6cbe7644.mp4",
+    "poster": "/media/series/vicus/vicus-expedition-6cbe7644.jpg"
+  },
+  "VicusWeather": {
+    "video": "/media/series/vicus/vicus-weather-99ab156e.mp4",
+    "poster": "/media/series/vicus/vicus-weather-99ab156e.jpg"
+  },
+  "VicusTechStretch": {
+    "video": "/media/series/vicus/vicus-tech-stretch-4018163f.mp4",
+    "poster": "/media/series/vicus/vicus-tech-stretch-4018163f.jpg"
+  },
+  "VicusTechUpf": {
+    "video": "/media/series/vicus/vicus-tech-upf-8ef6e9f1.mp4",
+    "poster": "/media/series/vicus/vicus-tech-upf-8ef6e9f1.jpg"
+  },
+  "VicusTechDwr": {
+    "video": "/media/series/vicus/vicus-tech-dwr-8724c971.mp4",
+    "poster": "/media/series/vicus/vicus-tech-dwr-8724c971.jpg"
   }
 }

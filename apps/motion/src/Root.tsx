@@ -1,4 +1,9 @@
-import { Composition } from "remotion";
+import { Composition, Still } from "remotion";
+import { type Piece, VicusBoard } from "./board/VicusBoard";
+import { Dwr } from "./tech/Dwr";
+import { VTECH } from "./tech/frame";
+import { Stretch } from "./tech/Stretch";
+import { Upf } from "./tech/Upf";
 import { Collage, collageSeconds } from "./collage/Collage";
 import { Down } from "./tech/Down";
 import { DownReal } from "./tech/DownReal";
@@ -18,6 +23,13 @@ export const RemotionRoot = () => (
     <Composition id="WariTechDownReal" component={DownReal} durationInFrames={9 * TECH.fps} {...TECH} />
     <Composition id="WariTechReinforcementReal" component={ReinforcementReal} durationInFrames={210} {...TECH} />
     <Composition id="WariExpedition" component={Collage} defaultProps={{ set: "expedition" as const }} durationInFrames={collageSeconds("expedition") * 30} fps={30} width={1920} height={1080} />
+    <Composition id="VicusTechStretch" component={Stretch} durationInFrames={6 * VTECH.fps} {...VTECH} />
+    <Composition id="VicusTechDwr" component={Dwr} durationInFrames={6 * VTECH.fps} {...VTECH} />
+    <Composition id="VicusTechUpf" component={Upf} durationInFrames={6 * VTECH.fps} {...VTECH} />
+    {/* storyboard previo a las piezas VICÚS: un still por beat (props.beat 0|1|2) */}
+    <Still id="VicusBoard" component={VicusBoard} defaultProps={{ piece: "stretch" as Piece, beat: 0 as 0 | 1 | 2 }} width={1920} height={1080} />
     <Composition id="WariWeather" component={Collage} defaultProps={{ set: "weather" as const }} durationInFrames={collageSeconds("weather") * 30} fps={30} width={1920} height={1080} />
+    <Composition id="VicusExpedition" component={Collage} defaultProps={{ set: "vicus-expedition" as const }} durationInFrames={collageSeconds("vicus-expedition") * 30} fps={30} width={1920} height={1080} />
+    <Composition id="VicusWeather" component={Collage} defaultProps={{ set: "vicus-weather" as const }} durationInFrames={collageSeconds("vicus-weather") * 30} fps={30} width={1920} height={1080} />
   </>
 );

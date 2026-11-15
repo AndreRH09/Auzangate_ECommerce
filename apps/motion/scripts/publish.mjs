@@ -22,6 +22,11 @@ const VIDEOS = {
   WariTechMembraneReal: 1 * MB,
   WariTechDownReal: 1 * MB,
   WariTechReinforcementReal: 1 * MB,
+  VicusExpedition: 4 * MB,
+  VicusWeather: 4 * MB,
+  VicusTechStretch: 1 * MB,
+  VicusTechDwr: 1 * MB,
+  VicusTechUpf: 1 * MB,
 };
 // ids sueltos tras las flags (publish:local WariTechDownReal) = solo esos; sin ids, todos
 const only = process.argv.slice(2).filter((a) => !a.startsWith("--"));
@@ -45,7 +50,7 @@ for (const [id, limit] of Object.entries(VIDEOS).filter(([id]) => !only.length |
   }
   run("npx", ["remotion", "still", id, poster, "--frame=0", "--image-format=jpeg", "--jpeg-quality=80"], motion);
   const hash = createHash("sha256").update(readFileSync(mp4)).digest("hex").slice(0, 8);
-  const base = `series/wari/${kebab(id)}-${hash}`;
+  const base = `series/${kebab(id).split("-")[0]}/${kebab(id)}-${hash}`; // WariX → series/wari, VicusX → series/vicus
   put(`${base}.mp4`, mp4, "video/mp4");
   put(`${base}.jpg`, poster, "image/jpeg");
   manifest[id] = { video: `/media/${base}.mp4`, poster: `/media/${base}.jpg` };
