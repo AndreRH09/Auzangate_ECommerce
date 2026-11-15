@@ -50,5 +50,13 @@
   "VicusTechDwr": {
     "video": "/media/series/vicus/vicus-tech-dwr-8724c971.mp4",
     "poster": "/media/series/vicus/vicus-tech-dwr-8724c971.jpg"
+  },
+  "CaralTechSeam": {
+    "video": "/media/series/caral/caral-tech-seam-c24dbcde.mp4",
+    "poster": "/media/series/caral/caral-tech-seam-c24dbcde.jpg"
+  },
+  "CaralEveryday": {
+    "video": "/media/series/caral/caral-everyday-31ae8ef8.mp4",
+    "poster": "/media/series/caral/caral-everyday-31ae8ef8.jpg"
   }
 }

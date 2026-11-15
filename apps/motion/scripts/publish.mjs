@@ -27,6 +27,8 @@ const VIDEOS = {
   VicusTechStretch: 1 * MB,
   VicusTechDwr: 1 * MB,
   VicusTechUpf: 1 * MB,
+  CaralEveryday: 4 * MB,
+  CaralTechSeam: 1 * MB,
 };
 // ids sueltos tras las flags (publish:local WariTechDownReal) = solo esos; sin ids, todos
 const only = process.argv.slice(2).filter((a) => !a.startsWith("--"));
