@@ -6,8 +6,9 @@ import { getSeries } from "@/lib/api";
 import { Breadcrumb } from "@/components/seo/Breadcrumb";
 import { BrandMark, type BrandAsset } from "@/components/ui/BrandMark";
 import { pageMeta } from "@/lib/seo";
-import { getSeriesIdentity } from "@/lib/series-identity";
+import { getSeriesIdentity, getVicusContent } from "@/lib/series-identity";
 import { SeriesIdentity } from "@/components/series/SeriesIdentity";
+import { VicusIdentity } from "@/components/series/VicusIdentity";
 
 async function find(locale: Locale, slug: string) {
   return (await getSeries(locale)).find((s) => s.slug === slug) ?? notFound();
@@ -41,12 +42,17 @@ export default async function SeriesPage({ params, searchParams }: PageProps<"/[
     />
   );
 
-  // serie con identidad de sub-marca (por ahora Wari): secciones de marca arriba y el listado debajo, en #productos
+  // serie con identidad de sub-marca (Wari, Vicús): secciones de marca arriba y el listado debajo, en #productos
   const identity = getSeriesIdentity(s.code, locale);
-  if (identity) {
+  const brand = identity ? (
+    <SeriesIdentity identity={identity} code={s.code} slug={s.slug} breadcrumb={breadcrumb} />
+  ) : s.code === "VICUS" ? (
+    <VicusIdentity content={getVicusContent(locale)} slug={s.slug} breadcrumb={breadcrumb} locale={locale} />
+  ) : null;
+  if (brand) {
     return (
       <main>
-        <SeriesIdentity identity={identity} code={s.code} slug={s.slug} breadcrumb={breadcrumb} />
+        {brand}
         <ProductListing
           locale={locale}
           path={`/s/${s.slug}`}

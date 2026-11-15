@@ -1,7 +1,7 @@
 import { AbsoluteFill, OffthreadVideo, Series, staticFile, useVideoConfig } from "remotion";
 import clips from "../../clips.json";
 
-export type ClipSet = "expedition" | "weather";
+export type ClipSet = "expedition" | "weather" | "vicus-expedition" | "vicus-weather";
 
 // Collage de video real con cortes secos, en el orden de clips.json. Cada clip ya viene recortado a su tramo
 // por scripts/fetch-clips.mjs. Sin textos ni gráficos encima (spec: no mezclar).
