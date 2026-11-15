@@ -158,6 +158,81 @@ const VICUS: Record<Locale, VicusContent> = {
 
 export const getVicusContent = (locale: Locale): VicusContent => VICUS[locale];
 
+// Caral (maquetado "Serie Caral"): la serie clásica. Manifiesto corto, banda de fibras, costura plana en video
+// junto a su lista, y uso en video partido con texto. El catálogo de debajo es el protagonista.
+export type CaralContent = {
+  heading: string;
+  line: string;
+  manifesto: string;
+  lead: string;
+  fibers: { label: string; value: string }[];
+  seam: { eyebrow: string; title: string; media?: SeriesMedia; points: Copy[] };
+  use: { eyebrow: string; title: string; body: string; cta: string; media?: SeriesMedia };
+};
+
+const CARAL: Record<Locale, CaralContent> = {
+  es: {
+    heading: "Serie Caral: merino, algodón y polar clásicos",
+    line: "LÍNEA CLASSIC · 4 PRODUCTOS",
+    manifesto: "Donde\nempezó todo.",
+    lead: "La serie clásica y pionera de Auzangate. Fibras nobles, cortes clásicos.",
+    fibers: [
+      { label: "FIBRA BASE", value: "Merino 100 %" },
+      { label: "POLO", value: "Algodón 100 %" },
+      { label: "POLAR", value: "300 g/m²" },
+      { label: "DESDE", value: "S/ 79" },
+    ],
+    seam: {
+      eyebrow: "01 · SISTEMA",
+      title: "Confeccionado",
+      media: m("CaralTechSeam"),
+      points: [
+        { title: "PLANA, SIN ROCE", body: "La costura flatlock queda al ras de la tela: no marca ni roza la piel, aunque la lleves todo el día o debajo de una mochila." },
+        { title: "4 HILOS ENTRELAZADOS", body: "Dos agujas y un looper cruzan cuatro hilos sobre la unión: aguanta el uso diario y los lavados sin abrirse." },
+        { title: "CEDE CON LA TELA", body: "El zigzag se estira junto con el punto y vuelve a su sitio, y por dentro no deja bordes sueltos: se ve igual de limpia por ambos lados." },
+      ],
+    },
+    use: {
+      eyebrow: "02 · USO",
+      title: "Comodidad y diseño",
+      body: "Caral es la puerta de entrada a Auzangate: piezas cómodas, ya sea en un viaje corto o como base de una salida más larga.",
+      cta: "Ver la serie",
+      media: m("CaralEveryday"),
+    },
+  },
+  en: {
+    heading: "Caral Series: classic merino, cotton and fleece",
+    line: "CLASSIC LINE · 4 PRODUCTS",
+    manifesto: "Where it\nall began.",
+    lead: "Auzangate's classic, pioneering series. Noble fibers, classic cuts.",
+    fibers: [
+      { label: "BASE FIBER", value: "100% merino" },
+      { label: "TEE", value: "100% cotton" },
+      { label: "FLEECE", value: "300 g/m²" },
+      { label: "FROM", value: "S/ 79" },
+    ],
+    seam: {
+      eyebrow: "01 · SYSTEM",
+      title: "How it's sewn",
+      media: m("CaralTechSeam"),
+      points: [
+        { title: "FLAT, NO CHAFING", body: "The flatlock seam sits flush with the fabric: it won't mark or rub your skin, even all day or under a backpack." },
+        { title: "4 INTERLOCKED THREADS", body: "Two needles and a looper cross four threads over the join: it holds up to daily wear and washing without opening." },
+        { title: "GIVES WITH THE FABRIC", body: "The zigzag stretches with the knit and springs back, with no loose edges inside: it looks just as clean on both sides." },
+      ],
+    },
+    use: {
+      eyebrow: "02 · USE",
+      title: "Comfort and design",
+      body: "Caral is the way into Auzangate: comfortable pieces for a short trip or as the base of a longer outing.",
+      cta: "See the series",
+      media: m("CaralEveryday"),
+    },
+  },
+};
+
+export const getCaralContent = (locale: Locale): CaralContent => CARAL[locale];
+
 const IDENTITIES: Record<string, Record<Locale, SeriesIdentity>> = { WARI };
 
 export const getSeriesIdentity = (code: string, locale: Locale): SeriesIdentity | null => IDENTITIES[code]?.[locale] ?? null;
