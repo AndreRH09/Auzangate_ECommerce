@@ -1,4 +1,4 @@
-// Catálogo: series, categorías y 14 productos ES/EN, todos unisex.
+// Catálogo: series, categorías y 16 productos ES/EN, todos unisex.
 // Los precios, specs y stocks son DATOS DE EJEMPLO, no fichas reales.
 import { ProductStatus, type Locale } from '../../src/generated/prisma/client.js';
 import { slugify } from '../../src/slugify.js';
@@ -56,6 +56,8 @@ const APPAREL: Line[] = [
   ['AV02', 'Pantalón', 'Pants', 'pantalones', 'VICUS', 279, 'Stretch 4 vías · UPF 50', '4-way stretch · UPF 50', { peso: '340 g', protección: 'UPF 50' }],
   ['AC04', 'Polo', 'Tee', 'capas', 'CARAL', 99, 'Algodón 180 g/m²', 'Cotton 180 g/m²', { peso: '180 g', fibra: 'Algodón 100 %' }],
   ['AW04', 'Casaca', 'Jacket', 'casacas', 'WARI', 549, 'Shell 3 capas · corte holgado', '3-layer shell · loose fit', { peso: '450 g', calce: 'Holgado', impermeabilidad: '20 000 mm' }],
+  ['AS05', 'Casaca', 'Jacket', 'casacas', 'SICAN', 699, 'Pluma 700 · -15 °C · corte amplio', '700 down · -15 °C · boxy fit', { peso: '680 g', relleno: 'Pluma 700 FP RDS', temperatura: '-15 °C', tela: 'Ripstop 20D · DWR sin PFC', calce: 'Amplio' }],
+  ['AV04', 'Short', 'Shorts', 'pantalones', 'VICUS', 199, 'Ripstop stretch · bolsillos cargo', 'Stretch ripstop · cargo pockets', { peso: '260 g', tela: 'Ripstop stretch', cintura: 'Elástica con cinturón' }],
 ];
 
 // [código, tipo ES, tipo EN, serie, precio S/, subtítulo ES, subtítulo EN, specs]
@@ -81,6 +83,8 @@ const REAL_PHOTOS: Record<string, Photo[]> = {
     VIEWS.map((v) => ({ key: `/products/AC04/${c.code}/${v}.png`, width: 1024, height: 1024, colorHex: c.hex })), // cuadradas
   ),
   AW04: VIEWS.map((v) => ({ key: `/products/AW04/G/${v}.png`, width: 1152, height: 1536, colorHex: '#566A82' })),
+  AS05: VIEWS.map((v) => ({ key: `/products/AS05/C/${v}.png`, width: 1152, height: 1536, colorHex: '#242428' })),
+  AV04: VIEWS.map((v) => ({ key: `/products/AV04/V/${v}.png`, width: 1152, height: 1536, colorHex: '#4B5D44' })), // musgo
 };
 
 

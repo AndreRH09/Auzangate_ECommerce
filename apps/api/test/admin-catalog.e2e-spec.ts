@@ -8,7 +8,7 @@ import { PrismaService } from '../src/prisma/prisma.service.js';
 import { setupApp } from '../src/setup.js';
 import { adminToken } from './admin.js';
 
-// Requiere el catálogo del seed: 14 productos unisex, 1 en borrador (Pantalón AV02).
+// Requiere el catálogo del seed: 16 productos unisex, 1 en borrador (Pantalón AV02).
 describe('Admin de catálogo (e2e)', () => {
   let app: INestApplication<App>;
   let token: string;
@@ -31,14 +31,14 @@ describe('Admin de catálogo (e2e)', () => {
 
   it('lista todos los estados, incluido el borrador', async () => {
     const all = await list();
-    expect(all.total).toBe(14);
+    expect(all.total).toBe(16);
     const drafts = await list('&status=DRAFT');
     expect(drafts.items.map((p) => p.code)).toEqual(['AV02']);
     expect(drafts.items[0]).toMatchObject({ name: 'Pantalón AV02', series: 'VICUS', status: 'DRAFT', gender: 'UNISEX' });
   });
 
   it('filtra por género exacto (sin sumar unisex)', async () => {
-    expect((await list('&gender=UNISEX')).total).toBe(14);
+    expect((await list('&gender=UNISEX')).total).toBe(16);
     expect((await list('&gender=WOMEN')).total).toBe(0);
   });
 
@@ -49,7 +49,7 @@ describe('Admin de catálogo (e2e)', () => {
     expect(codes).toEqual([...codes].sort());
     const page2 = await list('&page=2');
     expect(page2).toMatchObject({ page: 2, pageSize: 10 });
-    expect(page2.items).toHaveLength(4);
+    expect(page2.items).toHaveLength(5);
     expect((await list('&page=3')).items).toEqual([]);
   });
 
