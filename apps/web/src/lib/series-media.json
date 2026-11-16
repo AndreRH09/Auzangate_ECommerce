@@ -58,5 +58,29 @@
   "CaralEveryday": {
     "video": "/media/series/caral/caral-everyday-31ae8ef8.mp4",
     "poster": "/media/series/caral/caral-everyday-31ae8ef8.jpg"
+  },
+  "SicanTechRipstop": {
+    "video": "/media/series/sican/sican-tech-ripstop-a8944f55.mp4",
+    "poster": "/media/series/sican/sican-tech-ripstop-a8944f55.jpg"
+  },
+  "SicanPatch": {
+    "video": "/media/series/sican/sican-patch-b9ae56d3.mp4",
+    "poster": "/media/series/sican/sican-patch-b9ae56d3.jpg"
+  },
+  "SicanTechPlain": {
+    "video": "/media/series/sican/sican-tech-plain-10880bde.mp4",
+    "poster": "/media/series/sican/sican-tech-plain-10880bde.jpg"
+  },
+  "NascaTechRipstop": {
+    "video": "/media/series/nasca/nasca-tech-ripstop-5dcc007c.mp4",
+    "poster": "/media/series/nasca/nasca-tech-ripstop-5dcc007c.jpg"
+  },
+  "NascaTechMerino": {
+    "video": "/media/series/nasca/nasca-tech-merino-e6aaa4c3.mp4",
+    "poster": "/media/series/nasca/nasca-tech-merino-e6aaa4c3.jpg"
+  },
+  "NascaTechUpf": {
+    "video": "/media/series/nasca/nasca-tech-upf-e0f618d9.mp4",
+    "poster": "/media/series/nasca/nasca-tech-upf-e0f618d9.jpg"
   }
 }

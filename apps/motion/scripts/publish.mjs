@@ -29,6 +29,12 @@ const VIDEOS = {
   VicusTechUpf: 1 * MB,
   CaralEveryday: 4 * MB,
   CaralTechSeam: 1 * MB,
+  SicanTechRipstop: 1 * MB,
+  SicanTechPlain: 1 * MB,
+  SicanPatch: 1 * MB,
+  NascaTechRipstop: 1 * MB,
+  NascaTechMerino: 1 * MB,
+  NascaTechUpf: 1 * MB,
 };
 // ids sueltos tras las flags (publish:local WariTechDownReal) = solo esos; sin ids, todos
 const only = process.argv.slice(2).filter((a) => !a.startsWith("--"));
