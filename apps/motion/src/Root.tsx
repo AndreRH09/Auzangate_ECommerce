@@ -6,6 +6,8 @@ import { Fleece as CaralFleece } from "./tech/caral/Fleece";
 import { Merino as CaralMerino } from "./tech/caral/Merino";
 import { Seam as CaralSeam, SEAM } from "./tech/caral/Seam";
 import { Dwr } from "./tech/Dwr";
+import { Patch as SicanPatch, PATCH } from "./tech/sican/Patch";
+import { Tear as SicanTear, TEAR } from "./tech/sican/Tear";
 import { VTECH } from "./tech/frame";
 import { Stretch } from "./tech/Stretch";
 import { Upf } from "./tech/Upf";
@@ -40,6 +42,10 @@ export const RemotionRoot = () => (
     <Composition id="CaralTechSeam" component={CaralSeam} durationInFrames={SEAM.seconds * SEAM.fps} fps={SEAM.fps} width={SEAM.width} height={SEAM.height} />
     {/* CARAL · 02 USO: everyday walk urbano, mañana → tarde */}
     <Composition id="CaralEveryday" component={Collage} defaultProps={{ set: "caral-everyday" as const }} durationInFrames={collageSeconds("caral-everyday") * 30} fps={30} width={1920} height={1080} />
+    {/* SICÁN · ACABADOS: 01 parche bordándose, 02 rasgadura en tela común, 03 ripstop que la frena (misma duración) */}
+    <Composition id="SicanPatch" component={SicanPatch} durationInFrames={PATCH.seconds * PATCH.fps} fps={PATCH.fps} width={PATCH.width} height={PATCH.height} />
+    <Composition id="SicanTechPlain" component={SicanTear} defaultProps={{ ripstop: false }} durationInFrames={TEAR.seconds * TEAR.fps} fps={TEAR.fps} width={TEAR.width} height={TEAR.height} />
+    <Composition id="SicanTechRipstop" component={SicanTear} defaultProps={{ ripstop: true }} durationInFrames={TEAR.seconds * TEAR.fps} fps={TEAR.fps} width={TEAR.width} height={TEAR.height} />
     <Composition id="WariWeather" component={Collage} defaultProps={{ set: "weather" as const }} durationInFrames={collageSeconds("weather") * 30} fps={30} width={1920} height={1080} />
     <Composition id="VicusExpedition" component={Collage} defaultProps={{ set: "vicus-expedition" as const }} durationInFrames={collageSeconds("vicus-expedition") * 30} fps={30} width={1920} height={1080} />
     <Composition id="VicusWeather" component={Collage} defaultProps={{ set: "vicus-weather" as const }} durationInFrames={collageSeconds("vicus-weather") * 30} fps={30} width={1920} height={1080} />

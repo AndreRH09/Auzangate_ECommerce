@@ -233,6 +233,70 @@ const CARAL: Record<Locale, CaralContent> = {
 
 export const getCaralContent = (locale: Locale): CaralContent => CARAL[locale];
 
+// Sicán (maquetado "Serie Sicán · pieza única"): la única serie en negativo. Vitrina de una pieza (puffer AS05),
+// «Acabados» en 3 paneles con motion sin texto (bordado, rasgadura en tela común, ripstop que la frena) y la capa half zip AS02.
+type SicanBlock = { eyebrow: string; title: string; body: string; media?: SeriesMedia };
+type SicanFinish = { title: string; body: string; media?: SeriesMedia };
+export type SicanContent = {
+  heading: string;
+  line: string;
+  manifesto: string;
+  lead: string;
+  // priceCents fijo: AS05 ya está en el catálogo; pasarlo a getProduct
+  hero: { label: string; image: string; alt: string; href: string; priceCents: number; cta: string; seriesCta: string };
+  finishes: { eyebrow: string; title: string; items: SicanFinish[] };
+  layer: SicanBlock & { cta: string; image?: string; alt?: string };
+};
+
+const SICAN: Record<Locale, SicanContent> = {
+  es: {
+    heading: "Serie Sicán: prendas selectas de acabado fino",
+    line: "LÍNEA SELECTO",
+    manifesto: "Para estándares altos.",
+    lead: "Pensada como la orfebrería sicán: pocas piezas, trabajadas al detalle.",
+    hero: { label: "CASACA AS05 · PUFFER", image: "/products/AS05/C/front.png", alt: "Casaca AS05, puffer negro de cuello alto con tapeta frontal, vista frontal", href: "/p/casaca-as05", priceCents: 69900, cta: "Comprar", seriesCta: "Ver la serie" },
+    finishes: {
+      eyebrow: "01 · DETALLE",
+      title: "Acabados",
+      items: [
+        { title: "Bordado", body: "El parche 6384 · Sicán en hilo blanco, directo sobre la tela negra: una sola tinta y relieve que se lee con la luz.", media: m("SicanPatch") },
+        { title: "Tela común", body: "Sin retícula, un enganche se convierte en una rasgadura que recorre la prenda.", media: m("SicanTechPlain") },
+        { title: "Ripstop fino", body: "Los hilos de refuerzo frenan la rasgadura: el daño queda en un solo cuadro.", media: m("SicanTechRipstop") },
+      ],
+    },
+    layer: {
+      eyebrow: "02 · CAPA",
+      title: "Half zip AS02",
+      body: "La capa intermedia de la serie: medio cierre para regular el calor, cuello alto y un corte limpio que va bajo el puffer o solo.",
+      cta: "Ver AS02",
+    },
+  },
+  en: {
+    heading: "Sicán Series: select pieces with a fine finish",
+    line: "SELECTO LINE",
+    manifesto: "For high standards.",
+    lead: "Made like Sicán goldwork: few pieces, worked down to the detail.",
+    hero: { label: "AS05 JACKET · PUFFER", image: "/products/AS05/C/front.png", alt: "AS05 jacket, black high-collar puffer with front storm flap, front view", href: "/p/jacket-as05", priceCents: 69900, cta: "Shop", seriesCta: "View the series" },
+    finishes: {
+      eyebrow: "01 · DETAIL",
+      title: "Finishes",
+      items: [
+        { title: "Embroidered", body: "The 6384 · Sicán patch in white thread, straight onto the black fabric: one ink and a relief that shows in the light.", media: m("SicanPatch") },
+        { title: "Plain fabric", body: "Without a grid, one snag turns into a tear that runs through the garment.", media: m("SicanTechPlain") },
+        { title: "Fine ripstop", body: "The reinforcement threads stop the tear: the damage stays in a single square.", media: m("SicanTechRipstop") },
+      ],
+    },
+    layer: {
+      eyebrow: "02 · LAYER",
+      title: "AS02 half zip",
+      body: "The series' mid layer: a half zip to regulate heat, a high collar and a clean cut that works under the puffer or on its own.",
+      cta: "See AS02",
+    },
+  },
+};
+
+export const getSicanContent = (locale: Locale): SicanContent => SICAN[locale];
+
 const IDENTITIES: Record<string, Record<Locale, SeriesIdentity>> = { WARI };
 
 export const getSeriesIdentity = (code: string, locale: Locale): SeriesIdentity | null => IDENTITIES[code]?.[locale] ?? null;
