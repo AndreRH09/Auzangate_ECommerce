@@ -6,9 +6,10 @@ import { getSeries } from "@/lib/api";
 import { Breadcrumb } from "@/components/seo/Breadcrumb";
 import { BrandMark, type BrandAsset } from "@/components/ui/BrandMark";
 import { pageMeta } from "@/lib/seo";
-import { getCaralContent, getSeriesIdentity, getVicusContent } from "@/lib/series-identity";
+import { getCaralContent, getSeriesIdentity, getSicanContent, getVicusContent } from "@/lib/series-identity";
 import { CaralIdentity } from "@/components/series/CaralIdentity";
 import { SeriesIdentity } from "@/components/series/SeriesIdentity";
+import { SicanIdentity } from "@/components/series/SicanIdentity";
 import { VicusIdentity } from "@/components/series/VicusIdentity";
 
 async function find(locale: Locale, slug: string) {
@@ -43,7 +44,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps<"/[
     />
   );
 
-  // serie con identidad de sub-marca (Wari, Vicús, Caral): secciones de marca arriba y el listado debajo, en #productos
+  // serie con identidad de sub-marca (Wari, Vicús, Caral, Sicán): secciones de marca arriba y el listado debajo, en #productos
   const identity = getSeriesIdentity(s.code, locale);
   const brand = identity ? (
     <SeriesIdentity identity={identity} code={s.code} slug={s.slug} breadcrumb={breadcrumb} />
@@ -51,6 +52,8 @@ export default async function SeriesPage({ params, searchParams }: PageProps<"/[
     <VicusIdentity content={getVicusContent(locale)} slug={s.slug} breadcrumb={breadcrumb} locale={locale} />
   ) : s.code === "CARAL" ? (
     <CaralIdentity content={getCaralContent(locale)} slug={s.slug} breadcrumb={breadcrumb} />
+  ) : s.code === "SICAN" ? (
+    <SicanIdentity content={getSicanContent(locale)} breadcrumb={breadcrumb} />
   ) : null;
   if (brand) {
     return (
