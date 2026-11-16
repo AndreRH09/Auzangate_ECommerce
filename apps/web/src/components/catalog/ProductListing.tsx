@@ -103,7 +103,10 @@ export async function ProductListing({
         nextHref={list.nextCursor ? href({ cursor: list.nextCursor }) : null}
       />
 
+      {/* key: los inputs del drawer son no controlados (defaultChecked); al cambiar filtros por navegación sin recarga
+          (p. ej. «Comprar hombre») se vuelve a montar para reflejar los filtros activos */}
       <FilterDrawer
+        key={[sort, gender, size, color, min, max].join("|")}
         action={`/${locale}${path}`}
         q={base.q}
         facets={list.facets}

@@ -4,6 +4,7 @@ import { Link } from "@/i18n/navigation";
 import type { SeriesIdentity as Identity } from "@/lib/series-identity";
 import { BrandMark, type BrandAsset } from "../ui/BrandMark";
 import { SeriesVideo } from "./SeriesVideo";
+import { ShopGenderLink } from "./ShopGenderLink";
 
 // Página de sub-marca de una serie (maqueta "Serie Wari · identidad"): sello + manifiesto, expedición en video,
 // posicionamiento, tecnología (motion gráfico) y condiciones (video de clima). El listado va debajo, en #productos.
@@ -11,7 +12,6 @@ import { SeriesVideo } from "./SeriesVideo";
 export async function SeriesIdentity({ identity: id, code, slug, breadcrumb }: { identity: Identity; code: string; slug: string; breadcrumb: ReactNode }) {
   const t = await getTranslations("Series");
   const patch = `parche-serie-${code.toLowerCase()}` as BrandAsset;
-  const shop = (gender: "men" | "women") => `/s/${slug}?gender=${gender}#productos`;
 
   return (
     <>
@@ -36,8 +36,8 @@ export async function SeriesIdentity({ identity: id, code, slug, breadcrumb }: {
           </h2>
           <p className="max-w-[520px] text-lg">{id.expedition.line}</p>
           <div className="mt-3 flex flex-wrap justify-center gap-4">
-            <Link href={shop("men")} className="btn bg-nieve text-granito hover:bg-roca-clara">{t("shopMen")}</Link>
-            <Link href={shop("women")} className="btn bg-nieve text-granito hover:bg-roca-clara">{t("shopWomen")}</Link>
+            <ShopGenderLink slug={slug} gender="men" className="btn bg-nieve text-granito hover:bg-roca-clara">{t("shopMen")}</ShopGenderLink>
+            <ShopGenderLink slug={slug} gender="women" className="btn bg-nieve text-granito hover:bg-roca-clara">{t("shopWomen")}</ShopGenderLink>
           </div>
         </div>
       </section>

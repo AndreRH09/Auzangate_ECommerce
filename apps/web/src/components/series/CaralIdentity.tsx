@@ -1,15 +1,14 @@
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
-import { Link } from "@/i18n/navigation";
 import type { CaralContent } from "@/lib/series-identity";
 import { BrandMark } from "../ui/BrandMark";
+import { ShopGenderLink } from "./ShopGenderLink";
 import { SeriesVideo } from "./SeriesVideo";
 
 // Página de la serie Caral (maquetado "Serie Caral"): manifiesto corto, banda de fibras, costura plana en video
 // con su lista y uso en video partido con texto. El listado va debajo, en #productos (es "La serie" del maquetado).
 export async function CaralIdentity({ content: c, slug, breadcrumb }: { content: CaralContent; slug: string; breadcrumb: ReactNode }) {
   const t = await getTranslations("Series");
-  const shop = (gender: "men" | "women") => `/s/${slug}?gender=${gender}#productos`;
   const wrap = "mx-auto max-w-[1440px] px-4 md:px-16";
   const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -31,8 +30,8 @@ export async function CaralIdentity({ content: c, slug, breadcrumb }: { content:
         <div className="flex flex-col gap-6">
           <p className="max-w-[480px] text-lg leading-normal text-pizarra">{c.lead}</p>
           <div className="flex flex-wrap gap-3">
-            <Link href={shop("men")} className="btn bg-granito text-nieve hover:bg-pizarra">{t("shopMen")}</Link>
-            <Link href={shop("women")} className="btn border border-granito text-granito hover:bg-roca-clara">{t("shopWomen")}</Link>
+            <ShopGenderLink slug={slug} gender="men" className="btn bg-granito text-nieve hover:bg-pizarra">{t("shopMen")}</ShopGenderLink>
+            <ShopGenderLink slug={slug} gender="women" className="btn border border-granito text-granito hover:bg-roca-clara">{t("shopWomen")}</ShopGenderLink>
           </div>
         </div>
       </section>
