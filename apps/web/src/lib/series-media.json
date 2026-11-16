@@ -70,5 +70,17 @@
   "SicanTechPlain": {
     "video": "/media/series/sican/sican-tech-plain-10880bde.mp4",
     "poster": "/media/series/sican/sican-tech-plain-10880bde.jpg"
+  },
+  "NascaTechRipstop": {
+    "video": "/media/series/nasca/nasca-tech-ripstop-5dcc007c.mp4",
+    "poster": "/media/series/nasca/nasca-tech-ripstop-5dcc007c.jpg"
+  },
+  "NascaTechMerino": {
+    "video": "/media/series/nasca/nasca-tech-merino-e6aaa4c3.mp4",
+    "poster": "/media/series/nasca/nasca-tech-merino-e6aaa4c3.jpg"
+  },
+  "NascaTechUpf": {
+    "video": "/media/series/nasca/nasca-tech-upf-e0f618d9.mp4",
+    "poster": "/media/series/nasca/nasca-tech-upf-e0f618d9.jpg"
   }
 }

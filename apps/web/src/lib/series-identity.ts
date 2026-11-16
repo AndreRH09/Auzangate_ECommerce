@@ -233,6 +233,88 @@ const CARAL: Record<Locale, CaralContent> = {
 
 export const getCaralContent = (locale: Locale): CaralContent => CARAL[locale];
 
+// Nasca (maquetado "Nasca · peso como protagonista"): manifiesto en peso ligero, collage de fotos de clima cálido
+// (Pexels, en public/series/nasca) y "Liviana, no frágil" con las fotos reales del pantalón AN04 que sirve la API.
+export type NascaContent = {
+  heading: string;
+  line: string;
+  manifesto: string;
+  climate: { title: string; body: string; photos: { src: string; alt: string }[] };
+  // items[i]: texto + pieza de motion NASCA (apps/motion); sin media, la tarjeta queda en negro
+  tech: { eyebrow: string; title: string; items: (Copy & { media?: SeriesMedia })[] };
+  data: { label: string; value: string }[];
+};
+
+const NASCA_PHOTOS = (alts: string[]) =>
+  ["hiker-dunes", "group-dunes", "dune-ridge", "dry-coast", "dune-sky", "sand-ripples"].map((f, i) => ({ src: `/series/nasca/${f}.webp`, alt: alts[i] }));
+
+const NASCA: Record<Locale, NascaContent> = {
+  es: {
+    heading: "Serie Nasca: ropa liviana para climas cálidos",
+    line: "LÍNEA LIGHT",
+    manifesto: "Lo que no pesa,\nno estorba.",
+    climate: {
+      title: "Sol. Arena. Calor.",
+      body: "Para el desierto, la costa y los valles cálidos: prendas que se secan solas y se guardan en un bolsillo.",
+      photos: NASCA_PHOTOS([
+        "Caminante cruzando una duna frente a una cordillera seca",
+        "Tres personas caminando sobre dunas a pleno sol",
+        "Cresta de una duna contra el cielo azul",
+        "Playa seca bajo un acantilado",
+        "Duna lisa bajo un cielo con nubes altas",
+        "Ondas de viento sobre la arena",
+      ]),
+    },
+    tech: {
+      eyebrow: "01 · TECNOLOGÍA",
+      title: "Liviana, no frágil",
+      items: [
+        { title: "RIPSTOP 40D", body: "Una rejilla de hilo reforzado frena cualquier rasgón antes de que avance.", media: m("NascaTechRipstop") },
+        { title: "MERINO 87 %", body: "La fibra saca el sudor de la piel y lo suelta como vapor; no guarda olor en días de calor.", media: m("NascaTechMerino") },
+        { title: "UPF 50", body: "Bloquea el 98 % de la radiación UV en caminatas largas bajo el sol.", media: m("NascaTechUpf") },
+      ],
+    },
+    data: [
+      { label: "PESO", value: "260 g" },
+      { label: "TELA", value: "Ripstop 40D" },
+      { label: "PROTECCIÓN", value: "UPF 50" },
+    ],
+  },
+  en: {
+    heading: "Nasca Series: lightweight gear for warm climates",
+    line: "LIGHT LINE",
+    manifesto: "What weighs nothing\ngets in no one's way.",
+    climate: {
+      title: "Sun. Sand. Heat.",
+      body: "For the desert, the coast and warm valleys: gear that dries on its own and packs into a pocket.",
+      photos: NASCA_PHOTOS([
+        "Hiker crossing a dune in front of a dry mountain range",
+        "Three people walking on dunes in full sun",
+        "Dune crest against a blue sky",
+        "Dry beach below a cliff",
+        "Smooth dune under high clouds",
+        "Wind ripples on the sand",
+      ]),
+    },
+    tech: {
+      eyebrow: "01 · TECHNOLOGY",
+      title: "Light, not fragile",
+      items: [
+        { title: "40D RIPSTOP", body: "A grid of reinforced thread stops any tear before it spreads.", media: m("NascaTechRipstop") },
+        { title: "MERINO 87%", body: "The fiber pulls sweat off your skin and releases it as vapor; it holds no odor on hot days.", media: m("NascaTechMerino") },
+        { title: "UPF 50", body: "Blocks 98% of UV radiation on long walks under the sun.", media: m("NascaTechUpf") },
+      ],
+    },
+    data: [
+      { label: "WEIGHT", value: "260 g" },
+      { label: "FABRIC", value: "40D ripstop" },
+      { label: "PROTECTION", value: "UPF 50" },
+    ],
+  },
+};
+
+export const getNascaContent = (locale: Locale): NascaContent => NASCA[locale];
+
 // Sicán (maquetado "Serie Sicán · pieza única"): la única serie en negativo. Vitrina de una pieza (puffer AS05),
 // «Acabados» en 3 paneles con motion sin texto (bordado, rasgadura en tela común, ripstop que la frena) y la capa half zip AS02.
 type SicanBlock = { eyebrow: string; title: string; body: string; media?: SeriesMedia };

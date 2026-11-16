@@ -1,10 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
-import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { getProduct } from "@/lib/api";
 import type { VicusContent } from "@/lib/series-identity";
 import { BrandMark } from "../ui/BrandMark";
+import { ShopGenderLink } from "./ShopGenderLink";
 import { SeriesVideo } from "./SeriesVideo";
 import { VicusTech } from "./VicusTech";
 
@@ -14,7 +14,6 @@ export async function VicusIdentity({ content: c, slug, breadcrumb, locale }: { 
   const [t, product] = await Promise.all([getTranslations("Series"), getProduct(c.figure.slug, locale).catch(() => null)]);
   // orden del admin: frontal, posterior, lateral. Si el producto no existe (BD local sin él) el hero queda sin fotos, la página no cae.
   const [front, , side] = product?.images ?? [];
-  const shop = (gender: "men" | "women") => `/s/${slug}?gender=${gender}#productos`;
   const wrap = "mx-auto max-w-[1440px] px-4 md:px-16";
   const sectionHead = (id: string, title: string, eyebrow: string) => (
     <div className="mb-8 flex flex-wrap items-baseline justify-between gap-3 border-t border-granito pt-6">
@@ -40,8 +39,8 @@ export async function VicusIdentity({ content: c, slug, breadcrumb, locale }: { 
               <p className="display text-[clamp(48px,6.4vw,75px)] whitespace-pre-line normal-case" style={{ lineHeight: 0.82 }}>{c.manifesto}</p>
               <p className="max-w-[440px] text-lg leading-normal text-pizarra">{c.lead}</p>
               <div className="flex flex-wrap gap-3">
-                <Link href={shop("men")} className="btn bg-granito text-nieve hover:bg-pizarra">{t("shopMen")}</Link>
-                <Link href={shop("women")} className="btn border border-granito text-granito hover:bg-roca-clara">{t("shopWomen")}</Link>
+                <ShopGenderLink slug={slug} gender="men" className="btn bg-granito text-nieve hover:bg-pizarra">{t("shopMen")}</ShopGenderLink>
+                <ShopGenderLink slug={slug} gender="women" className="btn border border-granito text-granito hover:bg-roca-clara">{t("shopWomen")}</ShopGenderLink>
               </div>
             </div>
           </div>
